@@ -33,8 +33,6 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.GoogleAuthProvider;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.Arrays;
 
@@ -43,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivityHangman";
     public static final String ANONYMOUS = "anonymous";
     private static final int RC_SIGN_IN = 123;
+    private static final int REQUEST_EXTERNAL_STORAGE = 1;
 
     public static GoogleApiClient mGoogleApiClient;
 
@@ -51,14 +50,14 @@ public class MainActivity extends AppCompatActivity {
     public static DatabaseReference scoresReference;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
-    public static StorageReference textRef;
+
 
     private FirebaseUser user;
 
     private Button test_button;
 
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {
+
+    private String[] PERMISSIONS_STORAGE = {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
             android.Manifest.permission.WRITE_EXTERNAL_STORAGE
     };
@@ -105,31 +104,30 @@ public class MainActivity extends AppCompatActivity {
 
         mFirebaseAuth = FirebaseAuth.getInstance();
         // Set up Cloud Storage
-        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
+
         // Create a reference with an initial file path and name
-        StorageReference storageReference = firebaseStorage.getReference();
-        textRef = storageReference.child("test/test.txt");
-            mAuthStateListener = new FirebaseAuth.AuthStateListener() {
-                @Override
-                public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                    user = firebaseAuth.getCurrentUser();
-                    if (user != null) {
-                        // User is signed in
-                        Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                    } else {
-                        // User is signed out
-                        startActivityForResult(
-                                AuthUI.getInstance()
-                                        .createSignInIntentBuilder()
-                                        .setIsSmartLockEnabled(false)
-                                        .setProviders(Arrays.asList(
-                                                new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
-                                                new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build()))
-                                        .build(),
-                                RC_SIGN_IN);
-                    }
+
+        mAuthStateListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                user = firebaseAuth.getCurrentUser();
+                if (user != null) {
+                    // User is signed in
+                    Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                } else {
+                    // User is signed out
+                    startActivityForResult(
+                            AuthUI.getInstance()
+                                    .createSignInIntentBuilder()
+                                    .setIsSmartLockEnabled(false)
+                                    .setProviders(Arrays.asList(
+                                            new AuthUI.IdpConfig.Builder(AuthUI.EMAIL_PROVIDER).build(),
+                                            new AuthUI.IdpConfig.Builder(AuthUI.GOOGLE_PROVIDER).build()))
+                                    .build(),
+                            RC_SIGN_IN);
                 }
-            };
+            }
+        };
         verifyStoragePermissions(this);
     }
 
@@ -208,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RC_SIGN_IN) {
-             if (resultCode == RESULT_OK) {
+            if (resultCode == RESULT_OK) {
                 GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
                 if (result != null && result.isSuccess()) {
                     // Google Sign In was successful, authenticate with Firebase
@@ -219,8 +217,8 @@ public class MainActivity extends AppCompatActivity {
                     // ...
                 }
             } else if (resultCode == RESULT_CANCELED) {
-                 finish();
-             }
+                finish();
+            }
         }
     }
 

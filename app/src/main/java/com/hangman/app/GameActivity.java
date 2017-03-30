@@ -39,6 +39,8 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,6 +51,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import static com.hangman.app.MainActivity.mFirebaseDatabase;
+
 
 public class GameActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -69,6 +72,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
     private static String[] words;
 
     private File localFile;
+    public StorageReference textRef;
 
     HashMap<String, String> guessedLetters = new HashMap<>();
     HashMap<String, String> guessedWords = new HashMap<>();
@@ -116,8 +120,12 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
 
         startGameActivity();
 
+        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
+        StorageReference storageReference = firebaseStorage.getReference();
+        textRef = storageReference.child("test/test.txt");
+
         if (localFile != null) {
-            MainActivity.textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     // Local temp file has been created
@@ -400,6 +408,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                     Log.e(TAG, "onDataChange: NO DATA");
                 }
             }
+
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Log.e(TAG, "onCancelled: " + databaseError.getMessage());
