@@ -49,7 +49,6 @@ import java.util.HashMap;
 import java.util.Random;
 
 import static com.hangman.app.MainActivity.mFirebaseDatabase;
-import static com.hangman.app.MainActivity.verifyStoragePermissions;
 
 public class GameActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -95,15 +94,12 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
 
         if (isNetworkAvailable()) {
             try {
-                verifyStoragePermissions(this);
                 File categories = new File(Environment.getExternalStorageDirectory().getPath());
                 localFile = new File(categories, "test.txt");
             } catch (Exception e) {
-                Log.e(TAG, "verify permission error " + e);
             }
         } else {
             try {
-                verifyStoragePermissions(this);
                 localFile = new File(sdcard, "test.txt");
                 File inStream = new File(localFile.toString());
                 BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
@@ -315,7 +311,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
                             public void onComplete(@NonNull Task<Void> task) {
                                 // user is now signed out
-                                startActivity(new Intent(GameActivity.this, MainActivity.class));
+//                                startActivity(new Intent(GameActivity.this, MainActivity.class));
                                 finish();
                             }
                         });

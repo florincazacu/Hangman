@@ -130,10 +130,10 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             };
-        verifyStoragePermissions(MainActivity.this);
+        verifyStoragePermissions(this);
     }
 
-    public static void verifyStoragePermissions(Activity activity) {
+    public void verifyStoragePermissions(Activity activity) {
         // Check if we have write permission
         int permission = ActivityCompat.checkSelfPermission(activity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
@@ -198,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
         Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
                 new ResultCallback<Status>() {
                     @Override
-                    public void onResult(Status status) {
+                    public void onResult(@NonNull Status status) {
                         // ...
                     }
                 });
@@ -208,9 +208,7 @@ public class MainActivity extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == RC_SIGN_IN) {
-            if (resultCode == RESULT_CANCELED) {
-                finish();
-            } else if (resultCode == RESULT_OK) {
+             if (resultCode == RESULT_OK) {
                 GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
                 if (result != null && result.isSuccess()) {
                     // Google Sign In was successful, authenticate with Firebase
@@ -220,7 +218,9 @@ public class MainActivity extends AppCompatActivity {
                     // Google Sign In failed, update UI appropriately
                     // ...
                 }
-            }
+            } else if (resultCode == RESULT_CANCELED) {
+                 finish();
+             }
         }
     }
 
