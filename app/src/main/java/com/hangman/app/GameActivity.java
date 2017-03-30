@@ -52,7 +52,6 @@ import java.util.Random;
 
 import static com.hangman.app.MainActivity.mFirebaseDatabase;
 
-
 public class GameActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivity";
@@ -246,7 +245,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         return false;
     }
 
-    public static String getWord() {
+    public String getWord() {
         Random randomWord = new Random();
         int index = randomWord.nextInt(words.length);
         return words[index];
