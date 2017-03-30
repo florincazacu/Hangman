@@ -39,22 +39,19 @@ import java.util.Arrays;
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivityHangman";
-    public static final String ANONYMOUS = "anonymous";
     private static final int RC_SIGN_IN = 123;
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
 
     public static GoogleApiClient mGoogleApiClient;
 
     // Setup Firebase Instance Variables
-    public static FirebaseDatabase mFirebaseDatabase;
+    public FirebaseDatabase mFirebaseDatabase;
     public static DatabaseReference scoresReference;
     private FirebaseAuth mFirebaseAuth;
     private FirebaseAuth.AuthStateListener mAuthStateListener;
 
 
     private FirebaseUser user;
-
-    private Button test_button;
 
 
     private String[] PERMISSIONS_STORAGE = {
@@ -67,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        test_button = (Button) findViewById(R.id.test_button);
+        Button test_button = (Button) findViewById(R.id.test_button);
         // Capture button clicks
         test_button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View arg0) {

@@ -50,8 +50,6 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Random;
 
-import static com.hangman.app.MainActivity.mFirebaseDatabase;
-
 public class GameActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivity";
@@ -76,6 +74,8 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
     HashMap<String, String> guessedLetters = new HashMap<>();
     HashMap<String, String> guessedWords = new HashMap<>();
     HashMap<String, String> wordsFromFile = new HashMap<>();
+
+    public DatabaseReference scoresReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -188,7 +188,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                             } else {
                                 scores = new Score(mUsername, score);
                             }
-                            MainActivity.scoresReference.push().setValue(scores);
+                            scoresReference.push().setValue(scores);
                         }
                     }
 
@@ -359,7 +359,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
 
     private void showScore(String username) {
         mUsername = username;
-        final DatabaseReference reference = mFirebaseDatabase.getReference();
+        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -391,7 +391,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void startGameActivity() {
-        final DatabaseReference reference = mFirebaseDatabase.getReference();
+        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
