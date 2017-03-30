@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Hangman</string>
+    <string name="server_client_id">503407872082-gutplsv8pfbivi7k081ue6ssmg86l7pi.apps.googleusercontent.com</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="try_again">Try again</string>
+    <string name="tries_left">Tries: %1$d</string>
+    <string name="player_score">Score: %1$d</string>
+</resources>
