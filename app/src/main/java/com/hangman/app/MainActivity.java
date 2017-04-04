@@ -22,10 +22,9 @@ import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.auth.api.signin.GoogleSignInResult;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthCredential;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -75,6 +74,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        if (FirebaseApp.getApps(this).isEmpty()) {
+            FirebaseApp.initializeApp(this);
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        }
+
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.server_client_id))
                 .requestEmail()
@@ -90,8 +94,8 @@ public class MainActivity extends AppCompatActivity {
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
 
-        if (mFirebaseDatabase == null) {
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        if (!mGoogleApiClient.isConnected()) {
+            mGoogleApiClient.connect();
         }
 
         mFirebaseDatabase = FirebaseDatabase.getInstance();
@@ -100,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         scoresReference.keepSynced(true);
 
         mFirebaseAuth = FirebaseAuth.getInstance();
+
         // Set up Cloud Storage
 
         // Create a reference with an initial file path and name
@@ -107,12 +112,14 @@ public class MainActivity extends AppCompatActivity {
         mAuthStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                Log.d(TAG, "onAuthStateChanged");
                 user = firebaseAuth.getCurrentUser();
                 if (user != null) {
                     // User is signed in
-                    Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
+                    Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid() + "user: " + user);
                 } else {
-                    // User is signed out
+//                     User is signed out
+                    Log.d(TAG, "user is null");
                     startActivityForResult(
                             AuthUI.getInstance()
                                     .createSignInIntentBuilder()
@@ -146,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         mFirebaseAuth.addAuthStateListener(mAuthStateListener);
+//        mGoogleApiClient.connect();
     }
 
     @Override
@@ -173,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.sign_out_menu:
                 // sign out
-                signOut();
+//                signOut();
                 AuthUI.getInstance()
                         .signOut(this)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -190,30 +198,38 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void signOut() {
-        Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
-                new ResultCallback<Status>() {
-                    @Override
-                    public void onResult(@NonNull Status status) {
-                        // ...
-                    }
-                });
+        FirebaseAuth.getInstance().signOut();
+//        Auth.GoogleSignInApi.signOut(mGoogleApiClient).setResultCallback(
+//                new ResultCallback<Status>() {
+//                    @Override
+//                    public void onResult(@NonNull Status status) {
+//                        // ...
+//                    }
+//                });
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Log.d(TAG, "onActivityResult");
         if (requestCode == RC_SIGN_IN) {
+            Log.d(TAG, "RC_SIGN_IN");
             if (resultCode == RESULT_OK) {
+                Log.d(TAG, "RESULT_OK");
                 GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+                Log.d(TAG, "result: " + result);
                 if (result != null && result.isSuccess()) {
+                    Log.d(TAG, "Result isSuccess true");
                     // Google Sign In was successful, authenticate with Firebase
                     GoogleSignInAccount account = result.getSignInAccount();
                     firebaseAuthWithGoogle(account);
                 } else {
                     // Google Sign In failed, update UI appropriately
                     // ...
+                    Log.d(TAG, "Result isSuccess false or null");
                 }
-            } else if (resultCode == RESULT_CANCELED) {
+            } else if (resultCode == RESULT_CANCELED){
+                Log.d(TAG, "result canceled");
                 finish();
             }
         }
