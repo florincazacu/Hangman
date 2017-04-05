@@ -25,9 +25,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.ui.auth.AuthUI;
-import com.google.android.gms.auth.api.Auth;
-import com.google.android.gms.common.api.ResultCallback;
-import com.google.android.gms.common.api.Status;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -312,7 +309,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
             case R.id.sign_out_menu:
                 // sign out
-                signOut();
+//                signOut();
                 AuthUI.getInstance()
                         .signOut(this)
                         .addOnCompleteListener(new OnCompleteListener<Void>() {
@@ -328,17 +325,17 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private void signOut() {
-        if (MainActivity.mGoogleApiClient.isConnected()) {
-            Auth.GoogleSignInApi.signOut(MainActivity.mGoogleApiClient).setResultCallback(
-                    new ResultCallback<Status>() {
-                        @Override
-                        public void onResult(Status status) {
-                            // ...
-                        }
-                    });
-        }
-    }
+//    private void signOut() {
+//        if (MainActivity.mGoogleApiClient.isConnected()) {
+//            Auth.GoogleSignInApi.signOut(MainActivity.mGoogleApiClient).setResultCallback(
+//                    new ResultCallback<Status>() {
+//                        @Override
+//                        public void onResult(Status status) {
+//                            // ...
+//                        }
+//                    });
+//        }
+//    }
 
     public void clearButtons() {
         LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
