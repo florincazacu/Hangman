@@ -24,11 +24,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.firebase.ui.auth.AuthUI;
-import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -72,6 +69,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
     HashMap<String, String> guessedWords = new HashMap<>();
     HashMap<String, String> wordsFromFile = new HashMap<>();
 
+    private FirebaseDatabase mFirebaseDatabase;
     public DatabaseReference scoresReference;
 
     @Override
@@ -90,6 +88,15 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         Intent i = getIntent();
         mUsername = i.getStringExtra("mUsername");
 
+        if (mFirebaseDatabase == null) {
+            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+        }
+
+        mFirebaseDatabase = FirebaseDatabase.getInstance();
+
+        scoresReference = mFirebaseDatabase.getReference().child("scores");
+        scoresReference.keepSynced(true);
+
         File sdcard = Environment.getExternalStorageDirectory();
 
         if (isNetworkAvailable()) {
@@ -97,6 +104,7 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                 File categories = new File(Environment.getExternalStorageDirectory().getPath());
                 localFile = new File(categories, "test.txt");
             } catch (Exception e) {
+                Log.d(TAG, "network available error: " + e.getMessage());
             }
         } else {
             try {
@@ -307,35 +315,10 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
                 guessedLetters.clear();
                 lettersArea.setText(createWordUnderscores());
                 return true;
-            case R.id.sign_out_menu:
-                // sign out
-//                signOut();
-                AuthUI.getInstance()
-                        .signOut(this)
-                        .addOnCompleteListener(new OnCompleteListener<Void>() {
-                            public void onComplete(@NonNull Task<Void> task) {
-                                // user is now signed out
-//                                startActivity(new Intent(GameActivity.this, MainActivity.class));
-                                finish();
-                            }
-                        });
-                return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
-
-//    private void signOut() {
-//        if (MainActivity.mGoogleApiClient.isConnected()) {
-//            Auth.GoogleSignInApi.signOut(MainActivity.mGoogleApiClient).setResultCallback(
-//                    new ResultCallback<Status>() {
-//                        @Override
-//                        public void onResult(Status status) {
-//                            // ...
-//                        }
-//                    });
-//        }
-//    }
 
     public void clearButtons() {
         LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
