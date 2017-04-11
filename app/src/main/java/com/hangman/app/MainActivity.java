@@ -5,25 +5,22 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 
-import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener{
+public class MainActivity extends BaseActivity implements View.OnClickListener{
 
     private static final String TAG = "MainActivityHangman";
     private static final int RC_SIGN_IN = 12345;
-    public GoogleApiClient mGoogleApiClient;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
     private String mUsername;
-
-
 
     private String[] PERMISSIONS_STORAGE = {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -68,8 +65,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.sign_out_menu:
-                Intent myIntent = new Intent(MainActivity.this, SigninActivity.class);
-                startActivity(myIntent);
+                signOut();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -80,9 +76,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.test_button:
-                Intent myIntent = new Intent(MainActivity.this, GameActivity.class);
-                myIntent.putExtra("mUsername", mUsername);
-                startActivity(myIntent);
+                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if (user != null) {
+                    Intent myIntent = new Intent(MainActivity.this, GameActivity.class);
+                    startActivity(myIntent);
+                }
         }
     }
 }

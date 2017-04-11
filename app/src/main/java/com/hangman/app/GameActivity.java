@@ -5,14 +5,12 @@ package com.hangman.app;
  */
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -26,6 +24,8 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -44,7 +44,7 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Random;
 
-public class GameActivity extends AppCompatActivity implements View.OnClickListener {
+public class GameActivity extends BaseActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivity";
 
@@ -85,8 +85,11 @@ public class GameActivity extends AppCompatActivity implements View.OnClickListe
         triesLeft.setText(getString(R.string.tries_left, tries));
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
-        Intent i = getIntent();
-        mUsername = i.getStringExtra("mUsername");
+//        Intent i = getIntent();
+//        mUsername = i.getStringExtra("mUsername");
+
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        mUsername = user.getDisplayName();
 
         if (mFirebaseDatabase == null) {
             FirebaseDatabase.getInstance().setPersistenceEnabled(true);
