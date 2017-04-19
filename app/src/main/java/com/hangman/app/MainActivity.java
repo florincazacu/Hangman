@@ -20,7 +20,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     private static final int RC_SIGN_IN = 12345;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private String mUsername;
+
+    FirebaseUser user;
 
     private String[] PERMISSIONS_STORAGE = {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -32,12 +33,19 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
-
-        Intent i = getIntent();
-        mUsername = i.getStringExtra("mUsername");
-
         Button testButton = (Button) findViewById(R.id.test_button);
         testButton.setOnClickListener(this);
+
+        user = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (user == null) {
+            
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        finish();
     }
 
     public void verifyStoragePermissions(Activity activity) {
@@ -76,7 +84,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.test_button:
-                FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
                 if (user != null) {
                     Intent myIntent = new Intent(MainActivity.this, GameActivity.class);
                     startActivity(myIntent);

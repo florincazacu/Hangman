@@ -24,11 +24,10 @@ import com.google.firebase.auth.GoogleAuthProvider;
  * Created by Florin on 05-04-2017.
  */
 
-public class SigninActivity extends BaseActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
+public class SignInActivity extends BaseActivity implements GoogleApiClient.OnConnectionFailedListener, View.OnClickListener {
 
     private static final String TAG = "SignInActivity";
     private static final int RC_SIGN_IN = 9001;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +48,10 @@ public class SigninActivity extends BaseActivity implements GoogleApiClient.OnCo
                 if (user != null) {
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
-                    Intent myIntent = new Intent(SigninActivity.this, MainActivity.class);
+                    Intent myIntent = new Intent(SignInActivity.this, MainActivity.class);
                     myIntent.putExtra("mUsername", user.getDisplayName());
                     startActivity(myIntent);
+                    finish();
                 } else {
                     // User is signed out
                     Log.d(TAG, "onAuthStateChanged:signed_out");

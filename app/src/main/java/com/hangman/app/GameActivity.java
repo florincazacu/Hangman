@@ -44,11 +44,11 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Random;
 
-public class GameActivity extends BaseActivity implements View.OnClickListener {
+public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivity";
 
-    private static final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+    private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private String mUsername;
     private String wordToGuess;
     private char[] letters;
@@ -60,17 +60,16 @@ public class GameActivity extends BaseActivity implements View.OnClickListener {
     private TextView scoresTextView;
     private ImageView pictureContainer;
     private Score scores;
-    private static String[] words;
+    private String[] words;
+
+    private DatabaseReference scoresReference;
 
     private File localFile;
-    public StorageReference textRef;
 
     HashMap<String, String> guessedLetters = new HashMap<>();
     HashMap<String, String> guessedWords = new HashMap<>();
     HashMap<String, String> wordsFromFile = new HashMap<>();
 
-    private FirebaseDatabase mFirebaseDatabase;
-    public DatabaseReference scoresReference;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,33 +84,58 @@ public class GameActivity extends BaseActivity implements View.OnClickListener {
         triesLeft.setText(getString(R.string.tries_left, tries));
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
-//        Intent i = getIntent();
-//        mUsername = i.getStringExtra("mUsername");
+        scoresReference = FirebaseDatabase.getInstance().getReference().child("scores");
+        scoresReference.keepSynced(true);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         mUsername = user.getDisplayName();
-
-        if (mFirebaseDatabase == null) {
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-        }
-
-        mFirebaseDatabase = FirebaseDatabase.getInstance();
-
-        scoresReference = mFirebaseDatabase.getReference().child("scores");
-        scoresReference.keepSynced(true);
-
+        showScore(mUsername);
         File sdcard = Environment.getExternalStorageDirectory();
 
         if (isNetworkAvailable()) {
+            Log.d(TAG, "isNetworkAvailable: " + isNetworkAvailable());
             try {
                 File categories = new File(Environment.getExternalStorageDirectory().getPath());
                 localFile = new File(categories, "test.txt");
+
+                FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
+                StorageReference storageReference = firebaseStorage.getReference();
+                StorageReference textRef = storageReference.child("test/test.txt");
+
+                textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                        // Local temp file has been created
+                        try {
+                            File inStream = new File(localFile.toString());
+                            BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
+                            String line = buffReader.readLine();
+                            words = line.split("; ");
+                            for (String word : words) {
+                                wordsFromFile.put(word, word);
+                            }
+                            wordToGuess = getWord();
+                            letters = wordToGuess.toCharArray();
+                            lettersArea.setText(createWordUnderscores());
+                        } catch (IOException e) {
+                            Log.d(TAG, "onSuccess error: " + e.getMessage());
+                        }
+                    }
+                }).addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception exception) {
+                        // Handle any errors
+                        Log.e(TAG, "onCancelled: " + exception.getMessage());
+                    }
+                });
             } catch (Exception e) {
-                Log.d(TAG, "network available error: " + e.getMessage());
+                Log.d(TAG, "isNetworkAvailable error: " + e.getMessage());
             }
         } else {
+            Log.d(TAG, "else isNetworkAvailable: " + isNetworkAvailable());
             try {
                 localFile = new File(sdcard, "test.txt");
+                Log.d(TAG, "network not available, localFile: " + localFile);
                 File inStream = new File(localFile.toString());
                 BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
                 String line;
@@ -120,47 +144,20 @@ public class GameActivity extends BaseActivity implements View.OnClickListener {
                 for (String word : words) {
                     wordsFromFile.put(word, word);
                 }
+                wordToGuess = getWord();
+                letters = wordToGuess.toCharArray();
+                lettersArea.setText(createWordUnderscores());
+                Log.d(TAG, "wordsFromFile network not available " + wordsFromFile);
             } catch (IOException e) {
-                e.printStackTrace();
+                Log.d(TAG, "IOException " + e.getMessage());
             }
         }
 
         startGameActivity();
 
-        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-        StorageReference storageReference = firebaseStorage.getReference();
-        textRef = storageReference.child("test/test.txt");
-
-        if (localFile != null) {
-            textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    // Local temp file has been created
-                    try {
-                        File inStream = new File(localFile.toString());
-                        BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
-                        String line = buffReader.readLine();
-                        words = line.split("; ");
-                        for (String word : words) {
-                            wordsFromFile.put(word, word);
-                        }
-                        wordToGuess = getWord();
-                        letters = wordToGuess.toCharArray();
-                        lettersArea.setText(createWordUnderscores());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle any errors
-                    Log.e(TAG, "onCancelled: " + exception.getMessage());
-                }
-            });
-        }
         scores = new Score(mUsername, score);
-        scoresTextView.setText(getString(R.string.player_score, score));
+//        scoresTextView.setText(getString(R.string.player_score, score));
+
     }
 
     @Override
@@ -329,6 +326,7 @@ public class GameActivity extends BaseActivity implements View.OnClickListener {
     }
 
     public StringBuffer createWordUnderscores() {
+        Log.d(TAG, "createWordUnderscores");
         StringBuffer underscores = new StringBuffer();
         for (int i = 0; i < letters.length; i++) {
             if (letters[i] == ' ') {
@@ -337,6 +335,7 @@ public class GameActivity extends BaseActivity implements View.OnClickListener {
                 underscores.append("_ ");
             }
         }
+        Log.d(TAG, "underscores " + underscores);
         return underscores;
     }
 
@@ -367,6 +366,7 @@ public class GameActivity extends BaseActivity implements View.OnClickListener {
     }
 
     private boolean isNetworkAvailable() {
+        Log.d(TAG, "isNetworkAvailable method");
         ConnectivityManager cm =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
@@ -374,6 +374,7 @@ public class GameActivity extends BaseActivity implements View.OnClickListener {
     }
 
     public void startGameActivity() {
+        Log.d(TAG, "startGameActivity");
         final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
         query.addListenerForSingleValueEvent(new ValueEventListener() {

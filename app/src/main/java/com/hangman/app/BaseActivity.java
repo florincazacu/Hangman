@@ -16,6 +16,7 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 /**
  * Created by Florin on 10-04-2017.
@@ -29,9 +30,14 @@ public class BaseActivity extends AppCompatActivity implements GoogleApiClient.O
     protected FirebaseAuth mFirebaseAuth;
     protected FirebaseAuth.AuthStateListener mAuthStateListener;
 
+    protected FirebaseDatabase mFirebaseDatabase;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        mFirebaseDatabase = FirebaseDatabase.getInstance();
+
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.server_client_id))
                 .requestEmail()
@@ -95,7 +101,7 @@ public class BaseActivity extends AppCompatActivity implements GoogleApiClient.O
                     }
                 });
         finish();
-        Intent myIntent = new Intent(BaseActivity.this, SigninActivity.class);
+        Intent myIntent = new Intent(BaseActivity.this, SignInActivity.class);
         ComponentName cn = myIntent.getComponent();
         Intent mainIntent = IntentCompat.makeRestartActivityTask(cn);
         startActivity(mainIntent);
