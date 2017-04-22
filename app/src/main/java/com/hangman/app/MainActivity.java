@@ -39,13 +39,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         user = FirebaseAuth.getInstance().getCurrentUser();
 
         if (user == null) {
-            
+            Intent myIntent = new Intent( MainActivity.this, SignInActivity.class);
+            startActivity(myIntent);
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        finish();
     }
 
     public void verifyStoragePermissions(Activity activity) {

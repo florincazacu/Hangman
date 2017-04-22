@@ -16,6 +16,7 @@ import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 /**
@@ -29,7 +30,6 @@ public class BaseActivity extends AppCompatActivity implements GoogleApiClient.O
     protected GoogleApiClient mGoogleApiClient;
     protected FirebaseAuth mFirebaseAuth;
     protected FirebaseAuth.AuthStateListener mAuthStateListener;
-
     protected FirebaseDatabase mFirebaseDatabase;
 
     @Override
@@ -37,6 +37,8 @@ public class BaseActivity extends AppCompatActivity implements GoogleApiClient.O
         super.onCreate(savedInstanceState);
 
         mFirebaseDatabase = FirebaseDatabase.getInstance();
+        DatabaseReference scoresRef = mFirebaseDatabase.getReference("scores");
+        scoresRef.keepSynced(true);
 
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.server_client_id))

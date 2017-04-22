@@ -84,7 +84,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         triesLeft.setText(getString(R.string.tries_left, tries));
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
-        scoresReference = FirebaseDatabase.getInstance().getReference().child("scores");
+        scoresReference = FirebaseDatabase.getInstance().getReference("scores");
         scoresReference.keepSynced(true);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
@@ -93,7 +93,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         File sdcard = Environment.getExternalStorageDirectory();
 
         if (isNetworkAvailable()) {
-            Log.d(TAG, "isNetworkAvailable: " + isNetworkAvailable());
             try {
                 File categories = new File(Environment.getExternalStorageDirectory().getPath());
                 localFile = new File(categories, "test.txt");
@@ -132,10 +131,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 Log.d(TAG, "isNetworkAvailable error: " + e.getMessage());
             }
         } else {
-            Log.d(TAG, "else isNetworkAvailable: " + isNetworkAvailable());
             try {
                 localFile = new File(sdcard, "test.txt");
-                Log.d(TAG, "network not available, localFile: " + localFile);
                 File inStream = new File(localFile.toString());
                 BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
                 String line;
@@ -147,7 +144,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 wordToGuess = getWord();
                 letters = wordToGuess.toCharArray();
                 lettersArea.setText(createWordUnderscores());
-                Log.d(TAG, "wordsFromFile network not available " + wordsFromFile);
             } catch (IOException e) {
                 Log.d(TAG, "IOException " + e.getMessage());
             }
@@ -156,8 +152,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         startGameActivity();
 
         scores = new Score(mUsername, score);
-//        scoresTextView.setText(getString(R.string.player_score, score));
-
     }
 
     @Override
@@ -258,10 +252,10 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     public void replaceLetter() {
         StringBuffer guessedLettersStringBuffer = new StringBuffer();
-        for (int i = 0; i < letters.length; i++) {
-            if (guessedLetters.containsKey(String.valueOf(letters[i]))) {
-                guessedLettersStringBuffer.append(Character.toString(letters[i])).append(' ');
-            } else if (letters[i] == ' ') {
+        for (char letter : letters) {
+            if (guessedLetters.containsKey(String.valueOf(letter))) {
+                guessedLettersStringBuffer.append(Character.toString(letter)).append(' ');
+            } else if (letter == ' ') {
                 guessedLettersStringBuffer.append(" / ");
             } else {
                 guessedLettersStringBuffer.append("_ ");

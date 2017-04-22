@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
-import android.widget.Button;
 
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -33,9 +32,6 @@ public class SignInActivity extends BaseActivity implements GoogleApiClient.OnCo
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signin);
-
-        Button signOutBtn = (Button) findViewById(R.id.sign_out_button);
-        signOutBtn.setOnClickListener(this);
 
         findViewById(R.id.sign_in_button).setOnClickListener(this);
         SignInButton signInButton = (SignInButton) findViewById(R.id.sign_in_button);
