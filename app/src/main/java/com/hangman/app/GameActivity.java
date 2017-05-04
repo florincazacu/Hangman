@@ -5,6 +5,7 @@ package com.hangman.app;
  */
 
 import android.content.Context;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
@@ -54,6 +55,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private char[] letters;
     private int score;
     private int tries = 6;
+    private String category;
+    String path;
 
     private TextView lettersArea;
     private TextView triesLeft;
@@ -70,13 +73,12 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     HashMap<String, String> guessedWords = new HashMap<>();
     HashMap<String, String> wordsFromFile = new HashMap<>();
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
-
         createButtons();
+
         lettersArea = (TextView) findViewById(R.id.lettersInputArea);
         pictureContainer = (ImageView) findViewById(R.id.picture_container);
         pictureContainer.setImageResource(R.drawable.hangman_start);
@@ -84,22 +86,34 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         triesLeft.setText(getString(R.string.tries_left, tries));
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
+        Intent i = getIntent();
+        category = i.getStringExtra("category");
+        Log.d(TAG,"category " +  category);
+        path = "test/" + category + ".txt";
+
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
         scoresReference.keepSynced(true);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        mUsername = user.getDisplayName();
+        if (user != null) {
+            mUsername = user.getDisplayName();
+        }
         showScore(mUsername);
         File sdcard = Environment.getExternalStorageDirectory();
 
         if (isNetworkAvailable()) {
             try {
                 File categories = new File(Environment.getExternalStorageDirectory().getPath());
-                localFile = new File(categories, "test.txt");
+                localFile = new File(categories, category + ".txt");
 
                 FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
                 StorageReference storageReference = firebaseStorage.getReference();
-                StorageReference textRef = storageReference.child("test/test.txt");
+//                StorageReference textRef = storageReference.child("test/test.txt");
+                StorageReference textRef = storageReference.child(path);
+
+                startGameActivity();
+
+                scores = new Score(mUsername, score);
 
                 textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                     @Override
@@ -132,7 +146,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             }
         } else {
             try {
-                localFile = new File(sdcard, "test.txt");
+                localFile = new File(sdcard, category + ".txt");
                 File inStream = new File(localFile.toString());
                 BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
                 String line;
@@ -148,10 +162,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 Log.d(TAG, "IOException " + e.getMessage());
             }
         }
-
-        startGameActivity();
-
-        scores = new Score(mUsername, score);
     }
 
     @Override
@@ -320,7 +330,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     }
 
     public StringBuffer createWordUnderscores() {
-        Log.d(TAG, "createWordUnderscores");
         StringBuffer underscores = new StringBuffer();
         for (int i = 0; i < letters.length; i++) {
             if (letters[i] == ' ') {
@@ -329,7 +338,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 underscores.append("_ ");
             }
         }
-        Log.d(TAG, "underscores " + underscores);
         return underscores;
     }
 
@@ -360,7 +368,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     }
 
     private boolean isNetworkAvailable() {
-        Log.d(TAG, "isNetworkAvailable method");
         ConnectivityManager cm =
                 (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo netInfo = cm.getActiveNetworkInfo();
@@ -368,7 +375,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     }
 
     public void startGameActivity() {
-        Log.d(TAG, "startGameActivity");
         final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
         Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
         query.addListenerForSingleValueEvent(new ValueEventListener() {
