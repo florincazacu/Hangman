@@ -9,7 +9,6 @@ import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.util.Log;
@@ -55,7 +54,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private char[] letters;
     private int score;
     private int tries = 6;
-    private String category;
+    private String categories;
     String path;
 
     private TextView lettersArea;
@@ -87,9 +86,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
         Intent i = getIntent();
-        category = i.getStringExtra("category");
-        Log.d(TAG,"category " +  category);
-        path = "test/" + category + ".txt";
+        categories = i.getStringExtra("category");
+        Log.d(TAG,"categories " + categories);
+        path = "test/" + categories + ".txt";
 
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
         scoresReference.keepSynced(true);
@@ -99,17 +98,23 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             mUsername = user.getDisplayName();
         }
         showScore(mUsername);
-        File sdcard = Environment.getExternalStorageDirectory();
 
         if (isNetworkAvailable()) {
             try {
-                File categories = new File(Environment.getExternalStorageDirectory().getPath());
-                localFile = new File(categories, category + ".txt");
+                File categories = new File(this.getFilesDir(), this.categories);
+                categories.mkdir();
+                Log.d(TAG, "getFilesDier: " + this.getFilesDir());
+                Log.d(TAG, "categories File: " + categories);
+                localFile = new File(categories, this.categories + ".txt");
+                Log.d(TAG, "categories: " + this.categories);
+                Log.d(TAG, "localFile: " + localFile);
 
                 FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
                 StorageReference storageReference = firebaseStorage.getReference();
-//                StorageReference textRef = storageReference.child("test/test.txt");
+                Log.d(TAG, "storageReference: " + storageReference);
+                Log.d(TAG, "path: " + path);
                 StorageReference textRef = storageReference.child(path);
+                Log.d(TAG, "textRef: " + textRef);
 
                 startGameActivity();
 
@@ -119,15 +124,17 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     @Override
                     public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                         // Local temp file has been created
+                        Log.d(TAG, "local temp file has been created");
+                        Log.d(TAG, "taskSnapshot " + taskSnapshot);
                         try {
                             File inStream = new File(localFile.toString());
                             BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
                             String line = buffReader.readLine();
-                            words = line.split("; ");
+                            words = line.split(";");
                             for (String word : words) {
                                 wordsFromFile.put(word, word);
                             }
-                            wordToGuess = getWord();
+                            wordToGuess = getWord().toUpperCase();
                             letters = wordToGuess.toCharArray();
                             lettersArea.setText(createWordUnderscores());
                         } catch (IOException e) {
@@ -139,6 +146,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     public void onFailure(@NonNull Exception exception) {
                         // Handle any errors
                         Log.e(TAG, "onCancelled: " + exception.getMessage());
+                        exception.printStackTrace();
                     }
                 });
             } catch (Exception e) {
@@ -146,7 +154,10 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             }
         } else {
             try {
-                localFile = new File(sdcard, category + ".txt");
+                File categories = new File(this.getFilesDir(), this.categories);
+                Log.d(TAG, "else categories: " + categories);
+                localFile = new File(categories, this.categories + ".txt");
+                Log.d(TAG, "else localFile: " + localFile);
                 File inStream = new File(localFile.toString());
                 BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
                 String line;
@@ -267,6 +278,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 guessedLettersStringBuffer.append(Character.toString(letter)).append(' ');
             } else if (letter == ' ') {
                 guessedLettersStringBuffer.append(" / ");
+            } else if (letter == '\'') {
+                guessedLettersStringBuffer.append(" ' ");
             } else {
                 guessedLettersStringBuffer.append("_ ");
             }
@@ -334,6 +347,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         for (int i = 0; i < letters.length; i++) {
             if (letters[i] == ' ') {
                 underscores.append(" / ");
+            } else if (letters[i] == '\'') {
+                underscores.append(" ' ");
             } else {
                 underscores.append("_ ");
             }

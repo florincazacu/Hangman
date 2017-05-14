@@ -37,9 +37,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         verifyStoragePermissions(this);
-        testButton = (Button) findViewById(R.id.test_button);
+        testButton = (Button) findViewById(R.id.anatomy_button);
         testButton.setOnClickListener(this);
-        categoryButton= (Button) findViewById(R.id.category_button);
+        categoryButton= (Button) findViewById(R.id.animals_button);
         categoryButton.setOnClickListener(this);
 
         user = FirebaseAuth.getInstance().getCurrentUser();
@@ -84,22 +84,22 @@ public class MainActivity extends BaseActivity implements View.OnClickListener{
 
     @Override
     public void onClick(View v) {
-        if (user != null) {
-            Intent myIntent;
-            switch (v.getId()) {
-                case R.id.test_button:
-                        Log.d(TAG, "test button text: " + testButton.getText().toString().toLowerCase());
-                        myIntent = new Intent(MainActivity.this, GameActivity.class);
-                        myIntent.putExtra("category", testButton.getText().toString().toLowerCase());
-                        startActivity(myIntent);
-                        break;
-                case R.id.category_button:
-                        Log.d(TAG, "catgory button text: " + categoryButton.getText().toString().toLowerCase());
-                        myIntent = new Intent(MainActivity.this, GameActivity.class);
-                        myIntent.putExtra("category", categoryButton.getText().toString().toLowerCase());
-                        startActivity(myIntent);
-            }
+        if (user == null) {
+            return;
         }
-
+        Intent myIntent;
+        switch (v.getId()) {
+            case R.id.anatomy_button:
+                Log.d(TAG, "test button text: " + testButton.getText().toString().toLowerCase());
+                myIntent = new Intent(MainActivity.this, GameActivity.class);
+                myIntent.putExtra("category", testButton.getText().toString().toLowerCase());
+                startActivity(myIntent);
+                break;
+            case R.id.animals_button:
+                Log.d(TAG, "catgory button text: " + categoryButton.getText().toString().toLowerCase());
+                myIntent = new Intent(MainActivity.this, GameActivity.class);
+                myIntent.putExtra("category", categoryButton.getText().toString().toLowerCase());
+                startActivity(myIntent);
+        }
     }
 }
