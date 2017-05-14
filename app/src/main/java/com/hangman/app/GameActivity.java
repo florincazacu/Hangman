@@ -88,7 +88,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         Intent i = getIntent();
         categories = i.getStringExtra("category");
         Log.d(TAG,"categories " + categories);
-        path = "test/" + categories + ".txt";
+        path = "categories/" + categories + ".txt";
 
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
         scoresReference.keepSynced(true);
