@@ -56,6 +56,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private int tries = 6;
     private String categories;
     String path;
+    String categoriesPath;
 
     private TextView lettersArea;
     private TextView triesLeft;
@@ -65,6 +66,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private String[] words;
 
     private DatabaseReference scoresReference;
+    private DatabaseReference categoriesReference;
 
     private File localFile;
 
@@ -89,9 +91,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         categories = i.getStringExtra("category");
         Log.d(TAG,"categories " + categories);
         path = "categories/" + categories + ".txt";
+        categoriesPath = "categories/";
 
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
         scoresReference.keepSynced(true);
+
+        categoriesReference = FirebaseDatabase.getInstance().getReference().child("categories");
+        Log.d(TAG, "categoriesReference: " + categoriesReference);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -101,8 +107,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
         if (isNetworkAvailable()) {
             try {
-                File categories = new File(this.getFilesDir(), this.categories);
-                categories.mkdir();
+                File category = new File(this.getFilesDir(), this.categories);
+                category.mkdir();
                 Log.d(TAG, "getFilesDier: " + this.getFilesDir());
                 Log.d(TAG, "categories File: " + categories);
                 localFile = new File(categories, this.categories + ".txt");
@@ -113,8 +119,26 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 StorageReference storageReference = firebaseStorage.getReference();
                 Log.d(TAG, "storageReference: " + storageReference);
                 Log.d(TAG, "path: " + path);
+                Log.d(TAG, "categoriesPath: " + categoriesPath);
                 StorageReference textRef = storageReference.child(path);
                 Log.d(TAG, "textRef: " + textRef);
+
+                categoriesReference.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot snapshot) {
+                        //iterating through all the values in database
+                        for (DataSnapshot categoriesSnapshot : snapshot.getChildren()) {
+                            Log.d(TAG,"categoriesSnapshot " + categoriesSnapshot);
+                            Log.d(TAG,"snapshot.getChildren() " + snapshot.getChildren());
+                        }
+
+                    }
+
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+//                        progressDialog.dismiss();
+                    }
+                });
 
                 startGameActivity();
 
