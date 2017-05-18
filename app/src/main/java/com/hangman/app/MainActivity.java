@@ -27,6 +27,8 @@ import java.util.ArrayList;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
 
+    //merge test
+
     private static final String TAG = "MainActivityHangman";
     private static final int RC_SIGN_IN = 12345;
 
