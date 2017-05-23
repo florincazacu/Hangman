@@ -88,7 +88,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
         Intent i = getIntent();
-        categories = i.getStringExtra("category");
+        categories = i.getStringExtra("CATEGORY");
         Log.d(TAG, "categories " + categories);
         path = "categories/" + categories + ".txt";
         categoriesPath = "categories/";

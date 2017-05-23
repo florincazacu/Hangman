@@ -31,4 +31,5 @@
     <string name="transportation">TRANSPORTATION</string>
     <string name="trees_and_flowers">TREES AND FLOWERS</string>
     <string name="weather">WEATHER</string>
+    <string name="category">Category</string>
 </resources>
