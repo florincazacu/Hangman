@@ -20,7 +20,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class MainActivity extends BaseActivity {
 
@@ -31,16 +31,15 @@ public class MainActivity extends BaseActivity {
 
     private RecyclerView mRecyclerView;
     private RecyclerAdapter mAdapter;
+    private Category mCategory;
 
     private GridLayoutManager mGridLayoutManager;
 
     private DatabaseReference categoriesReference;
 
-    private ArrayList<String> categoriesList = new ArrayList<>();
+    private HashMap<String, String> categoriesMap = new HashMap<>();
 
     FirebaseUser user;
-
-    public Category category;
 
     private String[] PERMISSIONS_STORAGE = {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -61,18 +60,41 @@ public class MainActivity extends BaseActivity {
 
         categoriesReference.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot snapshot) {
+            public void onDataChange(DataSnapshot dataSnapshot) {
                 //iterating through all the values in database
-                if (snapshot.exists()) {
-                    for (DataSnapshot categoriesSnapshot : snapshot.getChildren()) {
-                        category = categoriesSnapshot.getValue(Category.class);
-                        String currentCategory = category.getName();
-                        categoriesList.add(currentCategory);
+
+                if (dataSnapshot.exists()) {
+                    for (DataSnapshot snap : dataSnapshot.getChildren()) {
+                        mCategory = snap.getValue(Category.class);
+                        categoriesMap.put(mCategory.getName(), mCategory.getGsReference());
                     }
-                    Log.d(TAG, "categoriesList " + categoriesList);
-                    mAdapter = new RecyclerAdapter(categoriesList);
-                    mRecyclerView.setAdapter(mAdapter);
+                } else {
+                    Log.e(TAG, "onDataChange: NO DATA");
                 }
+
+//                if (snapshot.exists()) {
+//                    for (DataSnapshot categoriesSnapshot : snapshot.getChildren()) {
+//                        Log.d(TAG, "snapshot.getChildren" + categoriesSnapshot);
+//                        Log.d(TAG, "categoriesSnapshot.getValue " + categoriesSnapshot.getValue());
+//                        HashMap<String, String> currentCategory = (HashMap<String, String>) categoriesSnapshot.getValue();
+//                        categoriesMap.putAll((HashMap<String, String>) categoriesSnapshot.getValue());
+//                        Log.d(TAG, "currentCategory " + currentCategory);
+//                        Map.Entry<String,String> entry = currentCategory.entrySet().iterator().next();
+//                        Log.d(TAG, "entry " + entry);
+//                        String name = entry.getKey();
+//                        Log.d(TAG, "name " + name);
+//                        String gsReference = entry.getValue();
+//                        Log.d(TAG, "gsReference " + gsReference);
+////                        categoriesMap.put(name, gsReference);
+//                        Log.d(TAG, "categoriesMap " + categoriesMap);
+
+
+
+//                    }
+                    Log.d(TAG, "categoriesList " + categoriesMap);
+                    mAdapter = new RecyclerAdapter(categoriesMap);
+                    mRecyclerView.setAdapter(mAdapter);
+//                }
             }
 
             @Override

@@ -3,14 +3,24 @@
               android:orientation="vertical"
               android:layout_width="match_parent"
               android:layout_height="wrap_content">
-    <TextView
-        android:id="@+id/category_name"
+
+    <!--<TextView-->
+        <!--android:id="@+id/category_name"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:gravity="center"-->
+        <!--android:ellipsize="end"-->
+        <!--android:maxLines="5"-->
+        <!--style="@android:style/Widget.Button"-->
+        <!--android:clickable="false"/>-->
+
+    <Button
+        android:id="@+id/category_button"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:ellipsize="end"
-        android:maxLines="5"
-        style="@android:style/Widget.Button"
-        android:clickable="false"/>
+        android:textSize="14sp"
+        android:textAllCaps="false"/>
 
 </LinearLayout>

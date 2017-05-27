@@ -55,6 +55,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private int score;
     private int tries = 6;
     private String categories;
+    private String gsReference;
     String path;
     String categoriesPath;
 
@@ -89,8 +90,10 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
         Intent i = getIntent();
         categories = i.getStringExtra("CATEGORY");
+        gsReference = i.getStringExtra("CATEGORY");
         Log.d(TAG, "categories " + categories);
-        path = "categories/" + categories + ".txt";
+//        path = "categories/" + categories + ".txt";
+        path = gsReference + categories + ".txt";
         categoriesPath = "categories/";
 
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
