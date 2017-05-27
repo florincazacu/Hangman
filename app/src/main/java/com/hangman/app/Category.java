@@ -6,27 +6,27 @@ package com.hangman.app;
 
 public class Category {
 
-    private String categoryName;
-    private String gsReference;
+    private String name;
+    private String gs_reference;
 
     public Category() {
 
     }
 
-    public Category(String categoryName, String score) {
-        this.categoryName = categoryName;
-        this.gsReference = score;
+    public Category(String gs_reference, String name) {
+        this.name = name;
+        this.gs_reference = gs_reference;
     }
 
     public String getName() {
-        return categoryName;
+        return name;
     }
 
-    public String getGsReference() {
-        return gsReference;
+    public String getGs_reference() {
+        return gs_reference;
     }
 
-    public void setGsReference(String gsReference) {
-        this.gsReference = gsReference;
+    public void setGs_reference(String gs_reference) {
+        this.gs_reference = gs_reference;
     }
 }

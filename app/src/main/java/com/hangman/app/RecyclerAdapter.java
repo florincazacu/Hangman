@@ -9,8 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * Created by Florin on 23-05-2017.
@@ -20,9 +19,9 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
 
     public static final String TAG = "RecyclerAdapter";
 
-    private HashMap<String, String> mCategories;
+    private ArrayList<Category> mCategories;
 
-    public RecyclerAdapter(HashMap<String, String> categories) {
+    public RecyclerAdapter(ArrayList<Category> categories) {
         Log.d(TAG, "Map " + categories);
         mCategories = categories;
     }
@@ -32,7 +31,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
 
         //2
         private Button categoryButton;
-        private String mCategory;
+        private Category mCategory;
 
         //3
         private static final String CATEGORY_KEY = "CATEGORY";
@@ -57,11 +56,11 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
             context.startActivity(startGameActivity);
         }
 
-        public void bindCategory(String category, String gsReference) {
-            Log.d(TAG, "bindCategory " + category + " " + gsReference);
+        public void bindCategory(Category category) {
+//            Log.d(TAG, "bindCategory " + category + " " + gsReference);
             mCategory = category;
-            categoryButton.setText(category);
-            categoryButton.setTag(gsReference);
+            categoryButton.setText(mCategory.getName());
+            categoryButton.setTag(mCategory.getGs_reference());
         }
     }
 
@@ -73,14 +72,10 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
     }
 
     @Override
-    public void onBindViewHolder(CategoryHolder holder, int position) {
-        for (Map.Entry<String, String> entry : mCategories.entrySet()) {
-            String currentCategory = mCategories.get(entry.getKey());
-            Log.d(TAG, "getKey " + currentCategory);
-            String currentGsReference = mCategories.get(entry.getValue());
-            Log.d(TAG, "getValue " + currentGsReference);
-            holder.bindCategory(currentCategory, currentGsReference);
-        }
+    public void onBindViewHolder(RecyclerAdapter.CategoryHolder holder, int position) {
+
+        Category itemCategory = mCategories.get(position);
+        holder.bindCategory(itemCategory);
     }
 
     @Override

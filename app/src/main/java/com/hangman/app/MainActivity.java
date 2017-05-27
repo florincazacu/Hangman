@@ -20,6 +20,7 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MainActivity extends BaseActivity {
@@ -37,7 +38,7 @@ public class MainActivity extends BaseActivity {
 
     private DatabaseReference categoriesReference;
 
-    private HashMap<String, String> categoriesMap = new HashMap<>();
+    private ArrayList<Category> categoriesMap = new ArrayList<>();
 
     FirebaseUser user;
 
@@ -65,36 +66,20 @@ public class MainActivity extends BaseActivity {
 
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
-                        mCategory = snap.getValue(Category.class);
-                        categoriesMap.put(mCategory.getName(), mCategory.getGsReference());
+                        Category category = snap.getValue(Category.class);
+                        Log.d(TAG, "category " + category);
+                        Log.d(TAG, "category getName " + category.getName());
+                        Log.d(TAG, "category getGSRef " + category.getGs_reference());
+//                        categoriesMap.put(category.getGs_reference(), category.getName());
+                        categoriesMap.add(category);
+                        Log.d(TAG, "categoriesMap " + categoriesMap);
                     }
                 } else {
                     Log.e(TAG, "onDataChange: NO DATA");
                 }
-
-//                if (snapshot.exists()) {
-//                    for (DataSnapshot categoriesSnapshot : snapshot.getChildren()) {
-//                        Log.d(TAG, "snapshot.getChildren" + categoriesSnapshot);
-//                        Log.d(TAG, "categoriesSnapshot.getValue " + categoriesSnapshot.getValue());
-//                        HashMap<String, String> currentCategory = (HashMap<String, String>) categoriesSnapshot.getValue();
-//                        categoriesMap.putAll((HashMap<String, String>) categoriesSnapshot.getValue());
-//                        Log.d(TAG, "currentCategory " + currentCategory);
-//                        Map.Entry<String,String> entry = currentCategory.entrySet().iterator().next();
-//                        Log.d(TAG, "entry " + entry);
-//                        String name = entry.getKey();
-//                        Log.d(TAG, "name " + name);
-//                        String gsReference = entry.getValue();
-//                        Log.d(TAG, "gsReference " + gsReference);
-////                        categoriesMap.put(name, gsReference);
-//                        Log.d(TAG, "categoriesMap " + categoriesMap);
-
-
-
-//                    }
                     Log.d(TAG, "categoriesList " + categoriesMap);
                     mAdapter = new RecyclerAdapter(categoriesMap);
                     mRecyclerView.setAdapter(mAdapter);
-//                }
             }
 
             @Override
