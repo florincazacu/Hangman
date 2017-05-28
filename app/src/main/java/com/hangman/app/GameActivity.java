@@ -46,7 +46,7 @@ import java.util.Random;
 
 public class GameActivity extends MainActivity implements View.OnClickListener {
 
-    private static final String TAG = "GameActivity";
+    private static final String TAG = "GameActivityTag";
 
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private String mUsername;
@@ -54,9 +54,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private char[] letters;
     private int score;
     private int tries = 6;
-    private String categories;
+    String category;
     private String gsReference;
-    String path;
+//    String path;
     String categoriesPath;
 
     private TextView lettersArea;
@@ -89,11 +89,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
         Intent i = getIntent();
-        categories = i.getStringExtra("CATEGORY");
-        gsReference = i.getStringExtra("CATEGORY");
-        Log.d(TAG, "categories " + categories);
-//        path = "categories/" + categories + ".txt";
-        path = gsReference + categories + ".txt";
+        category = i.getStringExtra("CATEGORY");
+        gsReference = i.getStringExtra("GS");
         categoriesPath = "categories/";
 
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
@@ -107,25 +104,28 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
         if (isNetworkAvailable()) {
             try {
-                File category = new File(this.getFilesDir(), this.categories);
-                category.mkdir();
-                Log.d(TAG, "getFilesDier: " + this.getFilesDir());
-                Log.d(TAG, "categories File: " + categories);
-                localFile = new File(categories, this.categories + ".txt");
-                Log.d(TAG, "categories: " + this.categories);
-                Log.d(TAG, "localFile: " + localFile);
+                File categoryFile = new File(this.getFilesDir(), "categories");
+                categoryFile.mkdir();
+                Log.d(TAG, "categoryFile: " + categoryFile);
+                Log.d(TAG, "getFilesDir: " + this.getFilesDir());
+//                Log.d(TAG, "category: " +category);
+                localFile = new File(categoryFile, category + ".txt");
+                Log.d(TAG, "localFile " + localFile);
 
                 FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
                 StorageReference storageReference = firebaseStorage.getReference();
-                Log.d(TAG, "storageReference: " + storageReference);
-                Log.d(TAG, "path: " + path);
+                Log.d(TAG, "storageReference: " + gsReference);
+                Log.d(TAG, "path: " + gsReference);
                 Log.d(TAG, "categoriesPath: " + categoriesPath);
-                StorageReference textRef = storageReference.child(path);
-                Log.d(TAG, "textRef: " + textRef);
 
                 startGameActivity();
 
                 scores = new Score(mUsername, score);
+
+//                String path = gsReference + category + ".txt";
+                String path = "categories/" + category + ".txt";
+                StorageReference textRef = storageReference.child(path);
+                Log.d(TAG, "textRef: " + textRef);
 
                 textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                     @Override
@@ -153,6 +153,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     public void onFailure(@NonNull Exception exception) {
                         // Handle any errors
                         Log.e(TAG, "onCancelled: " + exception.getMessage());
+                        Log.e(TAG, "onCancelled: " + exception.getMessage());
                         exception.printStackTrace();
                     }
                 });
@@ -161,9 +162,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             }
         } else {
             try {
-                File categories = new File(this.getFilesDir(), this.categories);
+                File categories = new File(this.getFilesDir(), category);
                 Log.d(TAG, "else categories: " + categories);
-                localFile = new File(categories, this.categories + ".txt");
+                localFile = new File(categories, category + ".txt");
                 Log.d(TAG, "else localFile: " + localFile);
                 File inStream = new File(localFile.toString());
                 BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));

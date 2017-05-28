@@ -21,7 +21,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 
 public class MainActivity extends BaseActivity {
 
@@ -32,13 +31,12 @@ public class MainActivity extends BaseActivity {
 
     private RecyclerView mRecyclerView;
     private RecyclerAdapter mAdapter;
-    private Category mCategory;
 
     private GridLayoutManager mGridLayoutManager;
 
     private DatabaseReference categoriesReference;
 
-    private ArrayList<Category> categoriesMap = new ArrayList<>();
+    private ArrayList<Category> categoriesList = new ArrayList<>();
 
     FirebaseUser user;
 
@@ -67,19 +65,13 @@ public class MainActivity extends BaseActivity {
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
                         Category category = snap.getValue(Category.class);
-                        Log.d(TAG, "category " + category);
-                        Log.d(TAG, "category getName " + category.getName());
-                        Log.d(TAG, "category getGSRef " + category.getGs_reference());
-//                        categoriesMap.put(category.getGs_reference(), category.getName());
-                        categoriesMap.add(category);
-                        Log.d(TAG, "categoriesMap " + categoriesMap);
+                        categoriesList.add(category);
                     }
                 } else {
                     Log.e(TAG, "onDataChange: NO DATA");
                 }
-                    Log.d(TAG, "categoriesList " + categoriesMap);
-                    mAdapter = new RecyclerAdapter(categoriesMap);
-                    mRecyclerView.setAdapter(mAdapter);
+                mAdapter = new RecyclerAdapter(categoriesList);
+                mRecyclerView.setAdapter(mAdapter);
             }
 
             @Override

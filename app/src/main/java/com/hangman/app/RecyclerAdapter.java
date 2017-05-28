@@ -22,7 +22,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
     private ArrayList<Category> mCategories;
 
     public RecyclerAdapter(ArrayList<Category> categories) {
-        Log.d(TAG, "Map " + categories);
         mCategories = categories;
     }
 
@@ -48,11 +47,12 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
         @Override
         public void onClick(View v) {
             Button b = (Button)v;
-            Log.d(TAG, "gs reference" + v.getTag().toString());
+            Log.d(TAG, "gs reference " + v.getTag().toString());
             Context context = itemView.getContext();
             Intent startGameActivity = new Intent(context, GameActivity.class);
-            startGameActivity.putExtra(CATEGORY_KEY, b.getText().toString());
+            startGameActivity.putExtra(CATEGORY_KEY, b.getText().toString().toLowerCase());
             startGameActivity.putExtra(GS_KEY, v.getTag().toString());
+            Log.d(TAG, "b.getText " + b.getText() + " b.getTag " + v.getTag());
             context.startActivity(startGameActivity);
         }
 
