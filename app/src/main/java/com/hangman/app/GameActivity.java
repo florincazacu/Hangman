@@ -44,6 +44,8 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Random;
 
+import static com.hangman.app.R.id.buttons_layout;
+
 public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivityTag";
@@ -54,9 +56,10 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private char[] letters;
     private int score;
     private int tries = 6;
+    private int missedWordsCount = 0;
     String category;
     private String gsReference;
-//    String path;
+    //    String path;
     String categoriesPath;
 
     private TextView lettersArea;
@@ -65,9 +68,10 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private ImageView pictureContainer;
     private Score scores;
     private String[] words;
+    private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
+            R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
 
     private DatabaseReference scoresReference;
-
 
     private File localFile;
 
@@ -106,33 +110,22 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             try {
                 File categoryFile = new File(this.getFilesDir(), "categories");
                 categoryFile.mkdir();
-                Log.d(TAG, "categoryFile: " + categoryFile);
-                Log.d(TAG, "getFilesDir: " + this.getFilesDir());
-//                Log.d(TAG, "category: " +category);
                 localFile = new File(categoryFile, category + ".txt");
-                Log.d(TAG, "localFile " + localFile);
 
                 FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
                 StorageReference storageReference = firebaseStorage.getReference();
-                Log.d(TAG, "storageReference: " + gsReference);
-                Log.d(TAG, "path: " + gsReference);
-                Log.d(TAG, "categoriesPath: " + categoriesPath);
 
                 startGameActivity();
 
                 scores = new Score(mUsername, score);
 
-//                String path = gsReference + category + ".txt";
                 String path = "categories/" + category + ".txt";
                 StorageReference textRef = storageReference.child(path);
-                Log.d(TAG, "textRef: " + textRef);
 
                 textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                         // Local temp file has been created
-                        Log.d(TAG, "local temp file has been created");
-                        Log.d(TAG, "taskSnapshot " + taskSnapshot);
                         try {
                             File inStream = new File(localFile.toString());
                             BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
@@ -152,20 +145,17 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     @Override
                     public void onFailure(@NonNull Exception exception) {
                         // Handle any errors
-                        Log.e(TAG, "onCancelled: " + exception.getMessage());
-                        Log.e(TAG, "onCancelled: " + exception.getMessage());
+                        Log.e(TAG, "onFailure: " + exception.getMessage());
                         exception.printStackTrace();
                     }
                 });
             } catch (Exception e) {
-                Log.d(TAG, "isNetworkAvailable error: " + e.getMessage());
+                Log.e(TAG, "isNetworkAvailable error: " + e.getMessage());
             }
         } else {
             try {
                 File categories = new File(this.getFilesDir(), category);
-                Log.d(TAG, "else categories: " + categories);
                 localFile = new File(categories, category + ".txt");
-                Log.d(TAG, "else localFile: " + localFile);
                 File inStream = new File(localFile.toString());
                 BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
                 String line;
@@ -205,11 +195,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                             HashMap<String, Object> result = new HashMap<>();
                             result.put("score", score);
                             reference.child(path).updateChildren(result);
-                            Log.d(TAG, "score case1 " + score);
                             scoresTextView.setText(getString(R.string.player_score, score));
                             triesLeft.setText(getString(R.string.tries_left, tries));
                         } else {
-                            Log.d(TAG, "score case2 " + score);
                             scoresTextView.setText(getString(R.string.player_score, score));
                             if (scores != null) {
                                 scores.setScore(score);
@@ -227,34 +215,20 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 });
             }
         } else {
+            pictureContainer.setImageResource(missedLetterImg[missedWordsCount]);
             tries--;
-            switch (tries) {
-                case 5:
-                    pictureContainer.setImageResource(R.drawable.hangman_1st_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 4:
-                    pictureContainer.setImageResource(R.drawable.hangman_2nd_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 3:
-                    pictureContainer.setImageResource(R.drawable.hangman_3rd_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 2:
-                    pictureContainer.setImageResource(R.drawable.hangman_4th_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 1:
-                    pictureContainer.setImageResource(R.drawable.hangman_5th_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 0:
-                    pictureContainer.setImageResource(R.drawable.hangman_game_over);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
-                    break;
+            triesLeft.setText(getString(R.string.tries_left, tries));
+            if (tries == 0) {
+                Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
+                lettersArea.setText(wordToGuess);
+                LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
+                for (int i = 0; i < buttons_layout.getChildCount(); i++) {
+                    View buttonsView = buttons_layout.getChildAt(i);
+                    buttonsView.setEnabled(false);
+                }
+                return;
             }
+            missedWordsCount++;
         }
         view.setEnabled(false);
     }
@@ -296,7 +270,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     }
 
     public void createButtons() {
-        LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        LinearLayout layout = (LinearLayout) findViewById(buttons_layout);
         for (int i = 0; i < 3; i++) {
             LinearLayout row = new LinearLayout(this);
             row.setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT));
@@ -346,7 +320,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     }
 
     public void clearButtons() {
-        LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        LinearLayout layout = (LinearLayout) findViewById(buttons_layout);
         layout.removeAllViews();
     }
 
