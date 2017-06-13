@@ -10,7 +10,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -175,6 +174,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     @Override
     public void onClick(View view) {
+        Log.d(TAG, "view " + view);
+        view.setEnabled(false);
         if (isLetterContainedInWord(view)) {
             guessedLetters.put(Character.toString(ALPHABET_LETTERS[(int) view.getTag()]), Character.toString(ALPHABET_LETTERS[(int) view.getTag()]));
             replaceLetter();
@@ -223,14 +224,16 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 lettersArea.setText(wordToGuess);
                 LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
                 for (int i = 0; i < buttons_layout.getChildCount(); i++) {
-                    View buttonsView = buttons_layout.getChildAt(i);
-                    buttonsView.setEnabled(false);
+                    LinearLayout row = (LinearLayout)buttons_layout.getChildAt(i);
+                    for (int j = 0; j < row.getChildCount(); j++) {
+                        Button letter_button = (Button)row.getChildAt(j);
+                        letter_button.setEnabled(false);
+                    }
                 }
                 return;
             }
             missedWordsCount++;
         }
-        view.setEnabled(false);
     }
 
     private boolean isLetterContainedInWord(View view) {
@@ -273,11 +276,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         LinearLayout layout = (LinearLayout) findViewById(buttons_layout);
         for (int i = 0; i < 3; i++) {
             LinearLayout row = new LinearLayout(this);
-            row.setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT));
+            row.setWeightSum(9);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0,getResources().getDimensionPixelSize(R.dimen.letter_button_height));
+            params.weight = 1;
             for (int j = 0; j < 9; j++) {
                 if (j + (i * 9) < ALPHABET_LETTERS.length) {
                     Button btnTag = new Button(this);
-                    btnTag.setLayoutParams(new ActionBar.LayoutParams(140, 150));
+                    btnTag.setLayoutParams(params);
                     btnTag.setText(String.valueOf(ALPHABET_LETTERS[j + (i * 9)]));
                     btnTag.setTag(j + (i * 9));
                     btnTag.setOnClickListener(this);
