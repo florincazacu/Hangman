@@ -25,7 +25,6 @@ import java.util.ArrayList;
 public class MainActivity extends BaseActivity {
 
     private static final String TAG = "MainActivityHangman";
-    private static final int RC_SIGN_IN = 12345;
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
 
@@ -61,7 +60,6 @@ public class MainActivity extends BaseActivity {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 //iterating through all the values in database
-
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
                         Category category = snap.getValue(Category.class);

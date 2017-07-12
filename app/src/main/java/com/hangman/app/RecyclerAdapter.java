@@ -34,7 +34,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
 
         //3
         private static final String CATEGORY_KEY = "CATEGORY";
-        private static final String GS_KEY = "GS";
+        private static final String GS_KEY = "GS_KEY";
 
         //4
         public CategoryHolder(View v) {

@@ -38,7 +38,6 @@ import com.google.firebase.storage.StorageReference;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Random;
@@ -57,26 +56,26 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private int tries = 6;
     private int missedWordsCount = 0;
     String category;
-    private String gsReference;
-    //    String path;
+    String gsKey;
     String categoriesPath;
 
-    private TextView lettersArea;
+    private TextView lettersTextView; //?
     private TextView triesLeft;
-    private TextView scoresTextView;
-    private ImageView pictureContainer;
-    private Score scores;
-    private String[] words;
+    private TextView scoresTextView; //?
+    private ImageView pictureContainer; //?
+    private Score scores; //?
+    private String[] words; //?
+    private String path; //?
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
             R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
 
     private DatabaseReference scoresReference;
 
-    private File localFile;
+    private File localFile; //?
 
     HashMap<String, String> guessedLetters = new HashMap<>();
     HashMap<String, String> guessedWords = new HashMap<>();
-    HashMap<String, String> wordsFromFile = new HashMap<>();
+    HashMap<String, String> wordsFromCategoryFile = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -84,7 +83,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         setContentView(R.layout.activity_game);
         createButtons();
 
-        lettersArea = (TextView) findViewById(R.id.lettersInputArea);
+        lettersTextView = (TextView) findViewById(R.id.lettersInputArea);
         pictureContainer = (ImageView) findViewById(R.id.picture_container);
         pictureContainer.setImageResource(R.drawable.hangman_start);
         triesLeft = (TextView) findViewById(R.id.remaining_lives);
@@ -93,11 +92,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
         Intent i = getIntent();
         category = i.getStringExtra("CATEGORY");
-        gsReference = i.getStringExtra("GS");
+        gsKey = i.getStringExtra("GS_KEY");
         categoriesPath = "categories/";
 
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
         scoresReference.keepSynced(true);
+
+        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
@@ -105,81 +106,70 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         }
         showScore(mUsername);
 
-        if (isNetworkAvailable()) {
-            try {
-                File categoryFile = new File(this.getFilesDir(), "categories");
-                categoryFile.mkdir();
-                localFile = new File(categoryFile, category + ".txt");
+        File categories = new File(this.getFilesDir(), "categories");
+        localFile = new File(categories, category + ".txt");
 
-                FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-                StorageReference storageReference = firebaseStorage.getReference();
-
-                startGameActivity();
-
-                scores = new Score(mUsername, score);
-
-                String path = "categories/" + category + ".txt";
-                StorageReference textRef = storageReference.child(path);
-
-                textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                        // Local temp file has been created
-                        try {
-                            File inStream = new File(localFile.toString());
-                            BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
-                            String line = buffReader.readLine();
-                            words = line.split(";");
-                            for (String word : words) {
-                                wordsFromFile.put(word, word);
-                            }
-                            wordToGuess = getWord().toUpperCase();
-                            letters = wordToGuess.toCharArray();
-                            lettersArea.setText(createWordUnderscores());
-                        } catch (IOException e) {
-                            Log.d(TAG, "onSuccess error: " + e.getMessage());
-                        }
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        // Handle any errors
-                        Log.e(TAG, "onFailure: " + exception.getMessage());
-                        exception.printStackTrace();
-                    }
-                });
-            } catch (Exception e) {
-                Log.e(TAG, "isNetworkAvailable error: " + e.getMessage());
-            }
-        } else {
-            try {
-                File categories = new File(this.getFilesDir(), category);
-                localFile = new File(categories, category + ".txt");
-                File inStream = new File(localFile.toString());
-                BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
-                String line;
-                line = buffReader.readLine();
-                words = line.split("; ");
-                for (String word : words) {
-                    wordsFromFile.put(word, word);
+        if (!localFile.exists() && isNetworkAvailable()) {
+            downloadCategoryFile();
+            startGameActivity(); //?
+            scores = new Score(mUsername, score); //?
+            path = "categories/" + category + ".txt";
+            StorageReference gsReference = firebaseStorage.getReferenceFromUrl(gsKey);
+            gsReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+                @Override
+                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                    showWordUnderscores();
                 }
-                wordToGuess = getWord();
-                letters = wordToGuess.toCharArray();
-                lettersArea.setText(createWordUnderscores());
-            } catch (IOException e) {
-                Log.d(TAG, "IOException " + e.getMessage());
-            }
+            }).addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception exception) {
+                    // Handle any errors
+                    Log.e(TAG, "onFailure: " + exception.getMessage());
+                    exception.printStackTrace();
+                }
+            });
+        } else {
+            showWordUnderscores();
         }
+    }
+
+    public void showWordUnderscores() {
+        getWordsFromCategoryFile();
+        wordToGuess = getWord();
+        letters = wordToGuess.toCharArray();
+        lettersTextView.setText(createWordUnderscores());
+    }
+
+    private void getWordsFromCategoryFile() {
+        File inStream = new File(localFile.toString());
+        BufferedReader buffReader;
+        String line;
+        try {
+            buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
+            line = buffReader.readLine();
+            words = line.split(";");
+            for (String word : words) {
+                wordsFromCategoryFile.put(word, word);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private File downloadCategoryFile() {
+        File categoryFile = new File(this.getFilesDir(), "categories");
+        categoryFile.mkdir();
+        localFile = new File(categoryFile, category + ".txt");
+        return localFile;
     }
 
     @Override
     public void onClick(View view) {
-        Log.d(TAG, "view " + view);
         view.setEnabled(false);
         if (isLetterContainedInWord(view)) {
             guessedLetters.put(Character.toString(ALPHABET_LETTERS[(int) view.getTag()]), Character.toString(ALPHABET_LETTERS[(int) view.getTag()]));
             replaceLetter();
-            if (!lettersArea.getText().toString().contains(String.valueOf('_'))) {
+            if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
                 guessedWords.put(wordToGuess, wordToGuess);
                 tries = 6;
                 Toast.makeText(this, "Congratulations!", Toast.LENGTH_SHORT).show();
@@ -192,7 +182,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                         if (dataSnapshot.getValue() != null) {
                             DataSnapshot nodeDataSnapshot = dataSnapshot.getChildren().iterator().next();
                             String key = nodeDataSnapshot.getKey();
-                            String path = "/" + dataSnapshot.getKey() + "/" + key;
+                            path = "/" + dataSnapshot.getKey() + "/" + key;
                             HashMap<String, Object> result = new HashMap<>();
                             result.put("score", score);
                             reference.child(path).updateChildren(result);
@@ -221,12 +211,12 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             triesLeft.setText(getString(R.string.tries_left, tries));
             if (tries == 0) {
                 Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
-                lettersArea.setText(wordToGuess);
+                lettersTextView.setText(wordToGuess);
                 LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
                 for (int i = 0; i < buttons_layout.getChildCount(); i++) {
-                    LinearLayout row = (LinearLayout)buttons_layout.getChildAt(i);
+                    LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
                     for (int j = 0; j < row.getChildCount(); j++) {
-                        Button letter_button = (Button)row.getChildAt(j);
+                        Button letter_button = (Button) row.getChildAt(j);
                         letter_button.setEnabled(false);
                     }
                 }
@@ -243,7 +233,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     return true;
                 }
             }
-
         } catch (NullPointerException e) {
             e.printStackTrace();
         }
@@ -269,7 +258,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 guessedLettersStringBuffer.append("_ ");
             }
         }
-        lettersArea.setText(guessedLettersStringBuffer);
+        lettersTextView.setText(guessedLettersStringBuffer);
     }
 
     public void createButtons() {
@@ -277,7 +266,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         for (int i = 0; i < 3; i++) {
             LinearLayout row = new LinearLayout(this);
             row.setWeightSum(9);
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0,getResources().getDimensionPixelSize(R.dimen.letter_button_height));
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, getResources().getDimensionPixelSize(R.dimen.letter_button_height));
             params.weight = 1;
             for (int j = 0; j < 9; j++) {
                 if (j + (i * 9) < ALPHABET_LETTERS.length) {
@@ -306,18 +295,16 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             case R.id.try_again:
                 pictureContainer.setImageResource(R.drawable.hangman_start);
                 tries = 6;
+                missedWordsCount = 0;
                 triesLeft.setText(getString(R.string.tries_left, tries));
                 clearButtons();
                 createButtons();
                 getWord();
-                for (String word : words) {
-                    wordsFromFile.put(word, word);
-                }
                 wordToGuess = getWord();
                 letters = wordToGuess.toCharArray();
-                lettersArea.setText(createWordUnderscores());
+                lettersTextView.setText(createWordUnderscores());
                 guessedLetters.clear();
-                lettersArea.setText(createWordUnderscores());
+                lettersTextView.setText(createWordUnderscores());
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
