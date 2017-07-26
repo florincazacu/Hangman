@@ -40,7 +40,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.HashMap;
-import java.util.Random;
 
 import static com.hangman.app.R.id.buttons_layout;
 
@@ -50,32 +49,34 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private String mUsername;
-    private String wordToGuess;
-    private char[] letters;
+    //    private String wordToGuess;
+//    private char[] letters;
     private int score;
     private int tries = 6;
     private int missedWordsCount = 0;
-    String category;
+    String selectedCategory;
     String gsKey;
     String categoriesPath;
+
+    private GameUtils mGameUtils;
 
     private TextView lettersTextView; //?
     private TextView triesLeft;
     private TextView scoresTextView; //?
     private ImageView pictureContainer; //?
     private Score scores; //?
-    private String[] words; //?
     private String path; //?
+    private String[] words; //?
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
             R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
+
 
     private DatabaseReference scoresReference;
 
     private File localFile; //?
 
-    HashMap<String, String> guessedLetters = new HashMap<>();
-    HashMap<String, String> guessedWords = new HashMap<>();
-    HashMap<String, String> wordsFromCategoryFile = new HashMap<>();
+//    HashMap<String, String> guessedLetters = new HashMap<>();
+//    HashMap<String, String> guessedWords = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,7 +92,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
         Intent i = getIntent();
-        category = i.getStringExtra("CATEGORY");
+        selectedCategory = i.getStringExtra("CATEGORY");
         gsKey = i.getStringExtra("GS_KEY");
         categoriesPath = "categories/";
 
@@ -107,18 +108,21 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         showScore(mUsername);
 
         File categories = new File(this.getFilesDir(), "categories");
-        localFile = new File(categories, category + ".txt");
+        localFile = new File(categories, selectedCategory + ".txt");
 
-        if (!localFile.exists() && isNetworkAvailable()) {
+        mGameUtils = new GameUtils(getWordsFromCategoryFile());
+
+//        if (!localFile.exists() && isNetworkAvailable()) {
             downloadCategoryFile();
+            getWordsFromCategoryFile();
             startGameActivity(); //?
             scores = new Score(mUsername, score); //?
-            path = "categories/" + category + ".txt";
+            path = "categories/" + selectedCategory + ".txt";
             StorageReference gsReference = firebaseStorage.getReferenceFromUrl(gsKey);
             gsReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    showWordUnderscores();
+                    lettersTextView.setText(mGameUtils.createWordUnderscores());
                 }
             }).addOnFailureListener(new OnFailureListener() {
                 @Override
@@ -128,19 +132,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     exception.printStackTrace();
                 }
             });
-        } else {
-            showWordUnderscores();
-        }
+//        } else {
+//            mGameUtils.convertWordToUnderscores();
+//        }
     }
 
-    public void showWordUnderscores() {
-        getWordsFromCategoryFile();
-        wordToGuess = getWord();
-        letters = wordToGuess.toCharArray();
-        lettersTextView.setText(createWordUnderscores());
-    }
 
-    private void getWordsFromCategoryFile() {
+    private String[] getWordsFromCategoryFile() {
         File inStream = new File(localFile.toString());
         BufferedReader buffReader;
         String line;
@@ -148,32 +146,31 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
             line = buffReader.readLine();
             words = line.split(";");
-            for (String word : words) {
-                wordsFromCategoryFile.put(word, word);
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return words;
     }
 
     private File downloadCategoryFile() {
         File categoryFile = new File(this.getFilesDir(), "categories");
         categoryFile.mkdir();
-        localFile = new File(categoryFile, category + ".txt");
+        localFile = new File(categoryFile, selectedCategory + ".txt");
         return localFile;
     }
 
     @Override
     public void onClick(View view) {
         view.setEnabled(false);
-        if (isLetterContainedInWord(view)) {
-            guessedLetters.put(Character.toString(ALPHABET_LETTERS[(int) view.getTag()]), Character.toString(ALPHABET_LETTERS[(int) view.getTag()]));
-            replaceLetter();
+//        verifyIfWordContainsLetter();
+
+        if (mGameUtils.isLetterContainedInWord(view, ALPHABET_LETTERS)) {
+            lettersTextView.setText(mGameUtils.replaceLetter());
             if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
-                guessedWords.put(wordToGuess, wordToGuess);
+                mGameUtils.addGuessedWord();
                 tries = 6;
                 Toast.makeText(this, "Congratulations!", Toast.LENGTH_SHORT).show();
-                score++;
+                mGameUtils.increaseScore();
                 final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
                 Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
                 query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -211,7 +208,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             triesLeft.setText(getString(R.string.tries_left, tries));
             if (tries == 0) {
                 Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
-                lettersTextView.setText(wordToGuess);
+                lettersTextView.setText(mGameUtils.getWordToGuess());
                 LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
                 for (int i = 0; i < buttons_layout.getChildCount(); i++) {
                     LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
@@ -224,41 +221,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             }
             missedWordsCount++;
         }
-    }
-
-    private boolean isLetterContainedInWord(View view) {
-        try {
-            for (char c : letters) {
-                if (c == ALPHABET_LETTERS[(int) view.getTag()]) {
-                    return true;
-                }
-            }
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public String getWord() {
-        Random randomWord = new Random();
-        int index = randomWord.nextInt(words.length);
-        return words[index];
-    }
-
-    public void replaceLetter() {
-        StringBuffer guessedLettersStringBuffer = new StringBuffer();
-        for (char letter : letters) {
-            if (guessedLetters.containsKey(String.valueOf(letter))) {
-                guessedLettersStringBuffer.append(Character.toString(letter)).append(' ');
-            } else if (letter == ' ') {
-                guessedLettersStringBuffer.append(" / ");
-            } else if (letter == '\'') {
-                guessedLettersStringBuffer.append(" ' ");
-            } else {
-                guessedLettersStringBuffer.append("_ ");
-            }
-        }
-        lettersTextView.setText(guessedLettersStringBuffer);
     }
 
     public void createButtons() {
@@ -293,18 +255,17 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.try_again:
-                pictureContainer.setImageResource(R.drawable.hangman_start);
-                tries = 6;
-                missedWordsCount = 0;
-                triesLeft.setText(getString(R.string.tries_left, tries));
-                clearButtons();
-                createButtons();
-                getWord();
-                wordToGuess = getWord();
-                letters = wordToGuess.toCharArray();
-                lettersTextView.setText(createWordUnderscores());
-                guessedLetters.clear();
-                lettersTextView.setText(createWordUnderscores());
+//                pictureContainer.setImageResource(R.drawable.hangman_start);
+//                tries = 6;
+//                missedWordsCount = 0;
+//                triesLeft.setText(getString(R.string.tries_left, tries));
+//                clearButtons();
+//                createButtons();
+//                getWord();
+//                wordToGuess = getWord();
+//                letters = wordToGuess.toCharArray();
+//                guessedLetters.clear();
+//                lettersTextView.setText(mGameUtils.createWordUnderscores());
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -316,19 +277,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         layout.removeAllViews();
     }
 
-    public StringBuffer createWordUnderscores() {
-        StringBuffer underscores = new StringBuffer();
-        for (int i = 0; i < letters.length; i++) {
-            if (letters[i] == ' ') {
-                underscores.append(" / ");
-            } else if (letters[i] == '\'') {
-                underscores.append(" ' ");
-            } else {
-                underscores.append("_ ");
-            }
-        }
-        return underscores;
-    }
 
     private void showScore(String username) {
         mUsername = username;

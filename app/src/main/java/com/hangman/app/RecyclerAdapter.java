@@ -57,7 +57,7 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
         }
 
         public void bindCategory(Category category) {
-//            Log.d(TAG, "bindCategory " + category + " " + gsReference);
+//            Log.d(TAG, "bindCategory " + selectedCategory + " " + gsReference);
             mCategory = category;
             categoryButton.setText(mCategory.getName());
             categoryButton.setTag(mCategory.getGs_reference());
