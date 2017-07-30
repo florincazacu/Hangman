@@ -47,7 +47,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivityTag";
 
-    private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+
     private String mUsername;
     //    private String wordToGuess;
 //    private char[] letters;
@@ -82,7 +82,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
-        createButtons();
 
         lettersTextView = (TextView) findViewById(R.id.lettersInputArea);
         pictureContainer = (ImageView) findViewById(R.id.picture_container);
@@ -111,6 +110,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         localFile = new File(categories, selectedCategory + ".txt");
 
         mGameUtils = new GameUtils(getWordsFromCategoryFile());
+
+        createButtons();
 
 //        if (!localFile.exists() && isNetworkAvailable()) {
             downloadCategoryFile();
@@ -164,7 +165,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         view.setEnabled(false);
 //        verifyIfWordContainsLetter();
 
-        if (mGameUtils.isLetterContainedInWord(view, ALPHABET_LETTERS)) {
+        if (mGameUtils.isLetterContainedInWord((char)view.getTag())) {
             lettersTextView.setText(mGameUtils.replaceLetter());
             if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
                 mGameUtils.addGuessedWord();
@@ -231,10 +232,10 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, getResources().getDimensionPixelSize(R.dimen.letter_button_height));
             params.weight = 1;
             for (int j = 0; j < 9; j++) {
-                if (j + (i * 9) < ALPHABET_LETTERS.length) {
+                if (j + (i * 9) < mGameUtils.getAlphabetLetters().length) {
                     Button btnTag = new Button(this);
                     btnTag.setLayoutParams(params);
-                    btnTag.setText(String.valueOf(ALPHABET_LETTERS[j + (i * 9)]));
+                    btnTag.setText(String.valueOf(mGameUtils.getAlphabetLetters()[j + (i * 9)]));
                     btnTag.setTag(j + (i * 9));
                     btnTag.setOnClickListener(this);
                     row.addView(btnTag);

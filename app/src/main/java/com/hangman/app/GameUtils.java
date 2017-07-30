@@ -1,7 +1,5 @@
 package com.hangman.app;
 
-import android.view.View;
-
 import java.util.HashMap;
 import java.util.Random;
 
@@ -11,6 +9,7 @@ import java.util.Random;
 
 class GameUtils {
 
+    private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private int livesLeft;
     private String[] words;
     private String wordToGuess;
@@ -60,18 +59,22 @@ class GameUtils {
         return underscores;
     }
 
-    boolean isLetterContainedInWord(View view, char[] alphabet_letters) {
-        try {
-            for (char c : letters) {
-                if (c == alphabet_letters[(int) view.getTag()]) {
-                    guessedLetters.put(Character.toString(alphabet_letters[(int) view.getTag()]), Character.toString(alphabet_letters[(int) view.getTag()]));
-                    return true;
-                }
-            }
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+    boolean isLetterContainedInWord(char selectedLetter) {
+        if (ArrayUtils.contains(letters, selectedLetter)) {
+            return true;
+        } else {
+//            for (char c : letters) {
+//                if (c == selectedLetter) {
+//                    guessedLetters.put(Character.toString(selectedLetter), Character.toString(selectedLetter));
+//                    return true;
+//                }
+//            }
+            return false;
         }
-        return false;
+    }
+
+    public char[] getAlphabetLetters() {
+        return ALPHABET_LETTERS;
     }
 
     public StringBuffer replaceLetter() {
