@@ -47,18 +47,14 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivityTag";
 
-
     private String mUsername;
-    //    private String wordToGuess;
-//    private char[] letters;
-    private int score;
-    private int tries = 6;
     private int missedWordsCount = 0;
     String selectedCategory;
     String gsKey;
     String categoriesPath;
 
     private GameUtils mGameUtils;
+    private FirebaseUtils mFirebaseUtils;
 
     private TextView lettersTextView; //?
     private TextView triesLeft;
@@ -70,13 +66,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
             R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
 
-
-    private DatabaseReference scoresReference;
+//    private DatabaseReference scoresReference;
 
     private File localFile; //?
-
-//    HashMap<String, String> guessedLetters = new HashMap<>();
-//    HashMap<String, String> guessedWords = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +79,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         pictureContainer = (ImageView) findViewById(R.id.picture_container);
         pictureContainer.setImageResource(R.drawable.hangman_start);
         triesLeft = (TextView) findViewById(R.id.remaining_lives);
-        triesLeft.setText(getString(R.string.tries_left, tries));
+        triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
         Intent i = getIntent();
@@ -95,12 +87,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         gsKey = i.getStringExtra("GS_KEY");
         categoriesPath = "categories/";
 
-        scoresReference = FirebaseDatabase.getInstance().getReference("scores");
-        scoresReference.keepSynced(true);
+        mFirebaseUtils = new FirebaseUtils(selectedCategory, gsKey);
+
+        mFirebaseUtils.createScoresReference();
 
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+
         if (user != null) {
             mUsername = user.getDisplayName();
         }
@@ -117,7 +110,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             downloadCategoryFile();
             getWordsFromCategoryFile();
             startGameActivity(); //?
-            scores = new Score(mUsername, score); //?
+            scores = new Score(mUsername, scores.getScore()); //?
             path = "categories/" + selectedCategory + ".txt";
             StorageReference gsReference = firebaseStorage.getReferenceFromUrl(gsKey);
             gsReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
@@ -169,9 +162,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             lettersTextView.setText(mGameUtils.replaceLetter());
             if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
                 mGameUtils.addGuessedWord();
-                tries = 6;
+                mGameUtils.resetTries();
                 Toast.makeText(this, "Congratulations!", Toast.LENGTH_SHORT).show();
-                mGameUtils.increaseScore();
+                scores.increaseScore();
                 final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
                 Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
                 query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -182,18 +175,18 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                             String key = nodeDataSnapshot.getKey();
                             path = "/" + dataSnapshot.getKey() + "/" + key;
                             HashMap<String, Object> result = new HashMap<>();
-                            result.put("score", score);
+                            result.put("score", scores.getScore());
                             reference.child(path).updateChildren(result);
-                            scoresTextView.setText(getString(R.string.player_score, score));
-                            triesLeft.setText(getString(R.string.tries_left, tries));
+                            scoresTextView.setText(getString(R.string.player_score, scores.getScore()));
+                            triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
                         } else {
-                            scoresTextView.setText(getString(R.string.player_score, score));
+                            scoresTextView.setText(getString(R.string.player_score, scores.getScore()));
                             if (scores != null) {
-                                scores.setScore(score);
+                                scores.setScore(scores.getScore());
                             } else {
-                                scores = new Score(mUsername, score);
+                                scores = new Score(mUsername, scores.getScore());
                             }
-                            scoresReference.push().setValue(scores);
+                            mFirebaseUtils.pushScoreToFirebase(scores);
                         }
                     }
 
@@ -205,9 +198,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             }
         } else {
             pictureContainer.setImageResource(missedLetterImg[missedWordsCount]);
-            tries--;
-            triesLeft.setText(getString(R.string.tries_left, tries));
-            if (tries == 0) {
+            mGameUtils.subtractOneTry();
+            triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
+            if (mGameUtils.getTriesLeft() == 0) {
                 Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
                 lettersTextView.setText(mGameUtils.getWordToGuess());
                 LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
@@ -290,8 +283,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
                         scores = snap.getValue(Score.class);
-                        score = scores.getScore();
-                        scoresTextView.setText(getString(R.string.player_score, score));
+                        scoresTextView.setText(getString(R.string.player_score, scores.getScore()));
                     }
                 } else {
                     Log.e(TAG, "onDataChange: NO DATA");
@@ -322,8 +314,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
                         scores = snap.getValue(Score.class);
-                        score = scores.getScore();
-                        scoresTextView.setText(getString(R.string.player_score, score));
+                        scoresTextView.setText(getString(R.string.player_score, scores.getScore()));
                     }
                 } else {
                     Log.e(TAG, "onDataChange: NO DATA");

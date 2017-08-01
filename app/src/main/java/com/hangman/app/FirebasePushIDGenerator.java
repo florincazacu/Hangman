@@ -41,7 +41,7 @@ public class FirebasePushIDGenerator {
             }
         } else {
             // If the timestamp hasn't changed since last push, use the same random number, except incremented by 1.
-            int i = 0;
+            int i;
             for (i = 11; i >= 0 && lastRandChars[i] == 63; i--) {
                 lastRandChars[i] = 0;
             }

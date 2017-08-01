@@ -29,4 +29,8 @@ public class Score {
     public void setScore(int score) {
         this.score = score;
     }
+
+    public void increaseScore() {
+        score++;
+    }
 }
