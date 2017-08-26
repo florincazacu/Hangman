@@ -27,4 +27,12 @@ public class FirebaseUtils {
     public void pushScoreToFirebase(Score scores) {
         scoresReference.push().setValue(scores);
     }
+
+    public String getSelectedCategory() {
+        return selectedCategory;
+    }
+
+    public String getGsKey() {
+        return gsKey;
+    }
 }

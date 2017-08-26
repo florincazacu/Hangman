@@ -52,28 +52,36 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     String selectedCategory;
     String gsKey;
     String categoriesPath;
+    private String path;
 
     private GameUtils mGameUtils;
     private FirebaseUtils mFirebaseUtils;
+    private FileUtils mFileUtils;
 
     private TextView lettersTextView; //?
     private TextView triesLeft;
     private TextView scoresTextView; //?
     private ImageView pictureContainer; //?
     private Score scores; //?
-    private String path; //?
+//    private String path; //?
     private String[] words; //?
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
             R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
 
-//    private DatabaseReference scoresReference;
-
-    private File localFile; //?
+//    private File localFile; //?
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
+
+        Intent i = getIntent();
+        selectedCategory = i.getStringExtra("CATEGORY");
+        gsKey = i.getStringExtra("GS_KEY");
+        categoriesPath = "categories/";
+
+        mFileUtils = new FileUtils(selectedCategory, this.getApplication());
+        mGameUtils = new GameUtils(getWordsFromCategoryFile());
 
         lettersTextView = (TextView) findViewById(R.id.lettersInputArea);
         pictureContainer = (ImageView) findViewById(R.id.picture_container);
@@ -82,13 +90,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
-        Intent i = getIntent();
-        selectedCategory = i.getStringExtra("CATEGORY");
-        gsKey = i.getStringExtra("GS_KEY");
-        categoriesPath = "categories/";
-
         mFirebaseUtils = new FirebaseUtils(selectedCategory, gsKey);
-
         mFirebaseUtils.createScoresReference();
 
         FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
@@ -99,21 +101,16 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         }
         showScore(mUsername);
 
-        File categories = new File(this.getFilesDir(), "categories");
-        localFile = new File(categories, selectedCategory + ".txt");
-
-        mGameUtils = new GameUtils(getWordsFromCategoryFile());
-
         createButtons();
 
 //        if (!localFile.exists() && isNetworkAvailable()) {
-            downloadCategoryFile();
+            mFileUtils.downloadCategory();
             getWordsFromCategoryFile();
             startGameActivity(); //?
-            scores = new Score(mUsername, scores.getScore()); //?
-            path = "categories/" + selectedCategory + ".txt";
+//            scores = new Score(mUsername, scores.getScore()); //?
+
             StorageReference gsReference = firebaseStorage.getReferenceFromUrl(gsKey);
-            gsReference.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            gsReference.getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
                 @Override
                 public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                     lettersTextView.setText(mGameUtils.createWordUnderscores());
@@ -133,7 +130,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
 
     private String[] getWordsFromCategoryFile() {
-        File inStream = new File(localFile.toString());
+        File inStream = new File(mFileUtils.downloadCategory().toString());
         BufferedReader buffReader;
         String line;
         try {
@@ -146,19 +143,12 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         return words;
     }
 
-    private File downloadCategoryFile() {
-        File categoryFile = new File(this.getFilesDir(), "categories");
-        categoryFile.mkdir();
-        localFile = new File(categoryFile, selectedCategory + ".txt");
-        return localFile;
-    }
-
     @Override
     public void onClick(View view) {
         view.setEnabled(false);
 //        verifyIfWordContainsLetter();
 
-        if (mGameUtils.isLetterContainedInWord((char)view.getTag())) {
+        if (mGameUtils.isLetterContainedInWord((int)view.getTag())) {
             lettersTextView.setText(mGameUtils.replaceLetter());
             if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
                 mGameUtils.addGuessedWord();

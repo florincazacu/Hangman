@@ -1,5 +1,7 @@
 package com.hangman.app;
 
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.Random;
 
@@ -10,7 +12,8 @@ import java.util.Random;
 class GameUtils {
 
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-    private int triesLeft;
+    private final String TAG = "GameUtils";
+    private int triesLeft = 6;
     private String[] words;
     private String wordToGuess;
     private char[] letters;
@@ -56,8 +59,9 @@ class GameUtils {
         return underscores;
     }
 
-    boolean isLetterContainedInWord(char selectedLetter) {
-        if (ArrayUtils.contains(letters, selectedLetter)) {
+    boolean isLetterContainedInWord(int selectedLetter) {
+        if (ArrayUtils.contains(letters, ALPHABET_LETTERS[selectedLetter])) {
+            guessedLetters.put(Character.toString(ALPHABET_LETTERS[selectedLetter]), Character.toString(ALPHABET_LETTERS[selectedLetter]));
             return true;
         } else {
             return false;
@@ -71,7 +75,9 @@ class GameUtils {
     public StringBuffer replaceLetter() {
         StringBuffer guessedLettersStringBuffer = new StringBuffer();
         for (char letter : letters) {
+            Log.d(TAG, "letter " + String.valueOf(letter));
             if (guessedLetters.containsKey(String.valueOf(letter))) {
+                Log.d(TAG, "guessedLetters.containsKey " + String.valueOf(letter));
                 guessedLettersStringBuffer.append(Character.toString(letter)).append(' ');
             } else if (letter == ' ') {
                 guessedLettersStringBuffer.append(" / ");
@@ -81,6 +87,7 @@ class GameUtils {
                 guessedLettersStringBuffer.append("_ ");
             }
         }
+        Log.d(TAG, "replaceLetter " + guessedLettersStringBuffer);
         return guessedLettersStringBuffer;
     }
 
