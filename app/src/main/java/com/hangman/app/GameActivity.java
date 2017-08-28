@@ -31,10 +31,6 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.HashMap;
 
 import static com.hangman.app.R.id.buttons_layout;
@@ -58,11 +54,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private TextView scoresTextView; //?
     private ImageView pictureContainer; //?
     private Score scores; //?
-    private String[] words; //?
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
             R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
-
-//    private File localFile; //?
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +69,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         mFirebaseUtils = new FirebaseUtils(selectedCategory, gsKey);
         mFirebaseUtils.createScoresReference();
         mFileUtils = new FileUtils(selectedCategory, this.getApplication());
-        mGameUtils = new GameUtils(getWordsFromCategoryFile());
+        mGameUtils = new GameUtils(mFileUtils.getWordsFromCategoryFile());
 
         lettersTextView = (TextView) findViewById(R.id.lettersInputArea);
         pictureContainer = (ImageView) findViewById(R.id.picture_container);
@@ -94,9 +87,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         createButtons();
 
         mFileUtils.downloadCategory();
-        getWordsFromCategoryFile();
+        mFileUtils.getWordsFromCategoryFile();
         startGameActivity();
-
 
         mFirebaseUtils.getStorageReference().getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
@@ -113,27 +105,11 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         });
     }
 
-
-    private String[] getWordsFromCategoryFile() {
-        File inStream = new File(mFileUtils.downloadCategory().toString());
-        BufferedReader buffReader;
-        String line;
-        try {
-            buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
-            line = buffReader.readLine();
-            words = line.split(";");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return words;
-    }
-
     @Override
     public void onClick(View view) {
         view.setEnabled(false);
 
         if (mGameUtils.isLetterContainedInWord((char) view.getTag())) {
-//        if (mGameUtils.isLetterContainedInWord((int) view.getTag())) {
             lettersTextView.setText(mGameUtils.replaceLetter());
             if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
                 mGameUtils.addGuessedWord();
@@ -205,7 +181,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     btnTag.setLayoutParams(params);
                     btnTag.setText(String.valueOf(mGameUtils.getAlphabetLetters()[j + (i * 9)]));
                     btnTag.setTag(mGameUtils.getAlphabetLetters()[j + (i * 9)]);
-//                    btnTag.setTag(j + (i * 9));
                     btnTag.setOnClickListener(this);
                     row.addView(btnTag);
                 }
