@@ -17,6 +17,7 @@ class GameUtils {
     private String[] words;
     private String wordToGuess;
     private char[] letters;
+    private final int defaultTries = 6;
 
     private HashMap<String, String> guessedLetters = new HashMap<>();
     private HashMap<String, String> guessedWords = new HashMap<>();
@@ -59,9 +60,9 @@ class GameUtils {
         return underscores;
     }
 
-    boolean isLetterContainedInWord(int selectedLetter) {
-        if (ArrayUtils.contains(letters, ALPHABET_LETTERS[selectedLetter])) {
-            guessedLetters.put(Character.toString(ALPHABET_LETTERS[selectedLetter]), Character.toString(ALPHABET_LETTERS[selectedLetter]));
+    boolean isLetterContainedInWord(char selectedLetter) {
+        if (ArrayUtils.contains(letters, selectedLetter)) {
+            guessedLetters.put(Character.toString(selectedLetter), Character.toString(selectedLetter));
             return true;
         } else {
             return false;
@@ -104,10 +105,10 @@ class GameUtils {
     }
 
     public void resetGame() {
-
+        resetTries();
     }
 
     public void resetTries() {
-        triesLeft = 6;
+        triesLeft = defaultTries;
     }
 }

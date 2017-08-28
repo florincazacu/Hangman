@@ -37,7 +37,7 @@ public class MainActivity extends BaseActivity {
 
     private ArrayList<Category> categoriesList = new ArrayList<>();
 
-    FirebaseUser user;
+    private FirebaseUser mFirebaseUser;
 
     private String[] PERMISSIONS_STORAGE = {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -77,9 +77,9 @@ public class MainActivity extends BaseActivity {
             }
         });
 
-        user = FirebaseAuth.getInstance().getCurrentUser();
+        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        if (user == null) {
+        if (mFirebaseUser == null) {
             Intent myIntent = new Intent(MainActivity.this, SignInActivity.class);
             startActivity(myIntent);
         }
@@ -91,7 +91,7 @@ public class MainActivity extends BaseActivity {
         int permission = ActivityCompat.checkSelfPermission(activity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
         if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the user
+            // We don't have permission so prompt the mFirebaseUser
             ActivityCompat.requestPermissions(
                     activity,
                     PERMISSIONS_STORAGE,

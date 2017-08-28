@@ -23,8 +23,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -32,8 +30,6 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -49,9 +45,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private String mUsername;
     private int missedWordsCount = 0;
-    String selectedCategory;
-    String gsKey;
-    String categoriesPath;
+    private String selectedCategory;
+    private String gsKey;
     private String path;
 
     private GameUtils mGameUtils;
@@ -63,7 +58,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private TextView scoresTextView; //?
     private ImageView pictureContainer; //?
     private Score scores; //?
-//    private String path; //?
     private String[] words; //?
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
             R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
@@ -78,8 +72,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         Intent i = getIntent();
         selectedCategory = i.getStringExtra("CATEGORY");
         gsKey = i.getStringExtra("GS_KEY");
-        categoriesPath = "categories/";
 
+        mFirebaseUtils = new FirebaseUtils(selectedCategory, gsKey);
+        mFirebaseUtils.createScoresReference();
         mFileUtils = new FileUtils(selectedCategory, this.getApplication());
         mGameUtils = new GameUtils(getWordsFromCategoryFile());
 
@@ -90,42 +85,32 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
-        mFirebaseUtils = new FirebaseUtils(selectedCategory, gsKey);
-        mFirebaseUtils.createScoresReference();
-
-        FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (user != null) {
-            mUsername = user.getDisplayName();
+        if (mFirebaseUtils.getFirebaseUser() != null) {
+            mUsername = mFirebaseUtils.getFirebaseUser().getDisplayName();
         }
+
         showScore(mUsername);
 
         createButtons();
 
-//        if (!localFile.exists() && isNetworkAvailable()) {
-            mFileUtils.downloadCategory();
-            getWordsFromCategoryFile();
-            startGameActivity(); //?
-//            scores = new Score(mUsername, scores.getScore()); //?
+        mFileUtils.downloadCategory();
+        getWordsFromCategoryFile();
+        startGameActivity();
 
-            StorageReference gsReference = firebaseStorage.getReferenceFromUrl(gsKey);
-            gsReference.getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                @Override
-                public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                    lettersTextView.setText(mGameUtils.createWordUnderscores());
-                }
-            }).addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception exception) {
-                    // Handle any errors
-                    Log.e(TAG, "onFailure: " + exception.getMessage());
-                    exception.printStackTrace();
-                }
-            });
-//        } else {
-//            mGameUtils.convertWordToUnderscores();
-//        }
+
+        mFirebaseUtils.getStorageReference().getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                lettersTextView.setText(mGameUtils.createWordUnderscores());
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle any errors
+                Log.e(TAG, "onFailure: " + exception.getMessage());
+                exception.printStackTrace();
+            }
+        });
     }
 
 
@@ -146,9 +131,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     @Override
     public void onClick(View view) {
         view.setEnabled(false);
-//        verifyIfWordContainsLetter();
 
-        if (mGameUtils.isLetterContainedInWord((int)view.getTag())) {
+        if (mGameUtils.isLetterContainedInWord((char) view.getTag())) {
+//        if (mGameUtils.isLetterContainedInWord((int) view.getTag())) {
             lettersTextView.setText(mGameUtils.replaceLetter());
             if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
                 mGameUtils.addGuessedWord();
@@ -219,7 +204,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     Button btnTag = new Button(this);
                     btnTag.setLayoutParams(params);
                     btnTag.setText(String.valueOf(mGameUtils.getAlphabetLetters()[j + (i * 9)]));
-                    btnTag.setTag(j + (i * 9));
+                    btnTag.setTag(mGameUtils.getAlphabetLetters()[j + (i * 9)]);
+//                    btnTag.setTag(j + (i * 9));
                     btnTag.setOnClickListener(this);
                     row.addView(btnTag);
                 }
@@ -239,17 +225,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.try_again:
-//                pictureContainer.setImageResource(R.drawable.hangman_start);
-//                tries = 6;
-//                missedWordsCount = 0;
-//                triesLeft.setText(getString(R.string.tries_left, tries));
-//                clearButtons();
-//                createButtons();
-//                getWord();
-//                wordToGuess = getWord();
-//                letters = wordToGuess.toCharArray();
-//                guessedLetters.clear();
-//                lettersTextView.setText(mGameUtils.createWordUnderscores());
+                mGameUtils.resetGame();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
