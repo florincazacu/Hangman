@@ -1,6 +1,7 @@
 package com.hangman.app;
 
 import android.app.Application;
+import android.util.Log;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,6 +13,8 @@ import java.io.InputStreamReader;
  */
 
 public class FileUtils {
+
+    private static final String TAG = "FileUtilsTag";
 
     private String path;
     private String selectedCategory;
@@ -37,16 +40,16 @@ public class FileUtils {
     }
 
     public String[] getWordsFromCategoryFile() {
-        File inStream = new File(downloadCategory().toString());
         BufferedReader buffReader;
         String line;
         try {
-            buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
+            buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(downloadCategory())));
             line = buffReader.readLine();
             words = line.split(";");
         } catch (Exception e) {
-            e.printStackTrace();
+            Log.e(TAG, "getWordsFromCategoryFile crash " + e);
         }
         return words;
     }
+
 }

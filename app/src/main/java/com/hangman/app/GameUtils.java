@@ -12,7 +12,7 @@ import java.util.Random;
 class GameUtils {
 
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-    private final String TAG = "GameUtils";
+    private static final String TAG = "GameUtils";
     private int triesLeft = 6;
     private String[] words;
     private String wordToGuess;
@@ -23,12 +23,16 @@ class GameUtils {
     private HashMap<String, String> guessedWords = new HashMap<>();
 
     GameUtils(String[] words) {
-        this.words = words;
+        if (words != null) {
+            this.words = words;
+        } else {
+            throw new NullPointerException("empty array");
+        }
     }
 
     private String generateWordToGuess() {
         Random randomWord = new Random();
-        int index = randomWord.nextInt(words.length);
+        int index = randomWord.nextInt(words.length-1);
         return words[index];
     }
 
