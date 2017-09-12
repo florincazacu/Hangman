@@ -12,12 +12,12 @@ import java.util.Random;
 class GameUtils {
 
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
+    private static final int DEFAULT_NUMBER_OF_TRIES = 6;
     private static final String TAG = "GameUtils";
     private int triesLeft = 6;
     private String[] words;
     private String wordToGuess;
     private char[] letters;
-    private final int defaultTries = 6;
 
     private HashMap<String, String> guessedLetters = new HashMap<>();
     private HashMap<String, String> guessedWords = new HashMap<>();
@@ -26,7 +26,7 @@ class GameUtils {
         if (words != null) {
             this.words = words;
         } else {
-            throw new NullPointerException("empty array");
+            throw new NullPointerException("The array is empty!");
         }
     }
 
@@ -52,10 +52,10 @@ class GameUtils {
     StringBuffer createWordUnderscores() {
         convertWordToUnderscores();
         StringBuffer underscores = new StringBuffer();
-        for (int i = 0; i < letters.length; i++) {
-            if (letters[i] == ' ') {
+        for (char letter : letters) {
+            if (letter == ' ') {
                 underscores.append(" / ");
-            } else if (letters[i] == '\'') {
+            } else if (letter == '\'') {
                 underscores.append(" ' ");
             } else {
                 underscores.append("_ ");
@@ -100,6 +100,10 @@ class GameUtils {
         guessedWords.put(wordToGuess, wordToGuess);
     }
 
+    public boolean isGuessedWordsEmpty(){
+        return guessedWords.isEmpty();
+    }
+
     public void startGame() {
 
     }
@@ -113,6 +117,6 @@ class GameUtils {
     }
 
     public void resetTries() {
-        triesLeft = defaultTries;
+        triesLeft = DEFAULT_NUMBER_OF_TRIES;
     }
 }

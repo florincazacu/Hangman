@@ -36,7 +36,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivityTag";
 
-    //    private String mUsername;
     private int missedWordsCount = 0;
     private String path;
     FileUtils mFileUtils;
