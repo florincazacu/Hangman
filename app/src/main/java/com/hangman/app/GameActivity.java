@@ -77,7 +77,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 pictureContainer = (ImageView) findViewById(R.id.picture_container);
                 pictureContainer.setImageResource(R.drawable.hangman_start);
                 createButtons();
-                startGameActivity();
+//                startGameActivity();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -102,6 +102,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 mGameUtils.resetTries();
                 Toast.makeText(this, "Congratulations!", Toast.LENGTH_SHORT).show();
                 playerScore.increaseScore();
+                Log.e(TAG, "player score increased " + playerScore.getScore());
                 final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
                 Query query = reference.child("score").orderByChild("username").equalTo(mFirebaseUtils.getUsername());
                 query.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -123,7 +124,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                             } else {
                                 playerScore = new Score(mFirebaseUtils.getUsername(), playerScore.getScore());
                             }
-                            mFirebaseUtils.pushScoreToFirebase(playerScore);
+                            Log.e(TAG, "player score onClick " + playerScore.getScore());
+                            mFirebaseUtils.updateScoreInFirebase(playerScore);
                         }
                     }
 
@@ -196,17 +198,26 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private void showScore() {
         final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        Log.e(TAG, "username " + mFirebaseUtils.getUsername());
         Query query = reference.child("scores").orderByChild("username").equalTo(mFirebaseUtils.getUsername());
+        Log.e(TAG, "query" + query);
+        Log.e(TAG, "username " + mFirebaseUtils.getUsername());
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // Get Post object and use the values to update the UI
+                Log.e(TAG, "dataSnapshot " + dataSnapshot);
+                Log.e(TAG, "dataSnapshot exists " + dataSnapshot.exists());
+                Log.e(TAG, "dataSnapshot value " + dataSnapshot.getValue());
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
                         playerScore = snap.getValue(Score.class);
+                        Log.e(TAG, "playerScore dataSnapshot.exists " + playerScore.getScore());
                         scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
                     }
                 } else {
+                    playerScore = new Score(mFirebaseUtils.getUsername(), 0);
+                    mFirebaseUtils.updateScoreInFirebase(playerScore);
                     Log.e(TAG, "onDataChange: NO DATA");
                 }
             }

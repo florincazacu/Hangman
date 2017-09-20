@@ -30,9 +30,14 @@ class GameUtils {
         }
     }
 
-    private String generateWordToGuess() {
+    public String generateWordToGuess() {
         Random randomWord = new Random();
+        Log.e(TAG, "guessed words: " + guessedWords);
         int index = randomWord.nextInt(words.length-1);
+        while (guessedWords.containsValue(words[index])) {
+            Log.e(TAG, "word contained");
+            index = randomWord.nextInt(words.length-1);
+        }
         return words[index];
     }
 

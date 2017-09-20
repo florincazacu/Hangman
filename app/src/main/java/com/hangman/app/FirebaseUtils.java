@@ -57,14 +57,13 @@ public class FirebaseUtils {
         });
     }
 
-
     public void createScoresReference() {
         scoresReference = FirebaseDatabase.getInstance().getReference("scores");
         scoresReference.keepSynced(true);
     }
 
-    public void pushScoreToFirebase(Score scores) {
-        scoresReference.push().setValue(scores);
+    public void updateScoreInFirebase(Score playerScore) {
+        FirebaseDatabase.getInstance().getReference().child("scores").child(mUsername).setValue(playerScore);
     }
 
     public FirebaseUser getFirebaseUser() {
