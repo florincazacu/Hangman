@@ -28,8 +28,6 @@ import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
 
-import java.util.HashMap;
-
 import static com.hangman.app.R.id.buttons_layout;
 
 public class GameActivity extends MainActivity implements View.OnClickListener {
@@ -37,18 +35,18 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     private static final String TAG = "GameActivityTag";
 
     private int missedWordsCount = 0;
-    private String path;
-    FileUtils mFileUtils;
+    private FileUtils mFileUtils;
     private GameUtils mGameUtils;
     private FirebaseUtils mFirebaseUtils;
-
-    private TextView lettersTextView; //?
-    private TextView triesLeft;
-    private TextView scoresTextView; //?
-    private ImageView pictureContainer; //?
-    private Score playerScore; //?
+    private Score playerScore;
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
             R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
+
+    private TextView lettersTextView;
+    private TextView triesLeftTextView;
+    private TextView scoresTextView;
+    private ImageView pictureContainer; //?
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +62,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         mFileUtils = new FileUtils(selectedCategory, this.getApplication());
 
         lettersTextView = (TextView) findViewById(R.id.lettersInputArea);
-        triesLeft = (TextView) findViewById(R.id.remaining_lives);
+        triesLeftTextView = (TextView) findViewById(R.id.remaining_lives);
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
         mFirebaseUtils.getStorageReference().getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
@@ -72,12 +70,11 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 mGameUtils = new GameUtils(mFileUtils.getWordsFromCategoryFile());
                 lettersTextView.setText(mGameUtils.createWordUnderscores());
-                triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
+                triesLeftTextView.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
                 mFileUtils.getWordsFromCategoryFile();
                 pictureContainer = (ImageView) findViewById(R.id.picture_container);
                 pictureContainer.setImageResource(R.drawable.hangman_start);
                 createButtons();
-//                startGameActivity();
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
@@ -87,7 +84,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 exception.printStackTrace();
             }
         });
-
         showScore();
     }
 
@@ -102,43 +98,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 mGameUtils.resetTries();
                 Toast.makeText(this, "Congratulations!", Toast.LENGTH_SHORT).show();
                 playerScore.increaseScore();
-                Log.e(TAG, "player score increased " + playerScore.getScore());
-                final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-                Query query = reference.child("score").orderByChild("username").equalTo(mFirebaseUtils.getUsername());
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.getValue() != null) {
-                            DataSnapshot nodeDataSnapshot = dataSnapshot.getChildren().iterator().next();
-                            String key = nodeDataSnapshot.getKey();
-                            path = "/" + dataSnapshot.getKey() + "/" + key;
-                            HashMap<String, Object> result = new HashMap<>();
-                            result.put("score", playerScore.getScore());
-                            reference.child(path).updateChildren(result);
-                            scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
-                            triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
-                        } else {
-                            scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
-                            if (playerScore != null) {
-                                playerScore.setScore(playerScore.getScore());
-                            } else {
-                                playerScore = new Score(mFirebaseUtils.getUsername(), playerScore.getScore());
-                            }
-                            Log.e(TAG, "player score onClick " + playerScore.getScore());
-                            mFirebaseUtils.updateScoreInFirebase(playerScore);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        Log.e(TAG, ">>> Error:" + "find onCancelled:" + databaseError);
-                    }
-                });
+                mFirebaseUtils.updateScoreInFirebase(playerScore);
+                scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
             }
         } else {
             pictureContainer.setImageResource(missedLetterImg[missedWordsCount]);
             mGameUtils.subtractOneTry();
-            triesLeft.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
+            triesLeftTextView.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
             if (mGameUtils.getTriesLeft() == 0) {
                 Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
                 lettersTextView.setText(mGameUtils.getWordToGuess());
@@ -198,50 +164,20 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private void showScore() {
         final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        Log.e(TAG, "username " + mFirebaseUtils.getUsername());
         Query query = reference.child("scores").orderByChild("username").equalTo(mFirebaseUtils.getUsername());
-        Log.e(TAG, "query" + query);
-        Log.e(TAG, "username " + mFirebaseUtils.getUsername());
         query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // Get Post object and use the values to update the UI
-                Log.e(TAG, "dataSnapshot " + dataSnapshot);
-                Log.e(TAG, "dataSnapshot exists " + dataSnapshot.exists());
-                Log.e(TAG, "dataSnapshot value " + dataSnapshot.getValue());
                 if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
                         playerScore = snap.getValue(Score.class);
-                        Log.e(TAG, "playerScore dataSnapshot.exists " + playerScore.getScore());
                         scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
                     }
                 } else {
                     playerScore = new Score(mFirebaseUtils.getUsername(), 0);
                     mFirebaseUtils.updateScoreInFirebase(playerScore);
-                    Log.e(TAG, "onDataChange: NO DATA");
-                }
-            }
-
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "onCancelled: " + databaseError.getMessage());
-            }
-        });
-    }
-
-    public void startGameActivity() {
-        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        Query query = reference.child("score").orderByChild("username").equalTo(mFirebaseUtils.getUsername());
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Get Post object and use the values to update the UI
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot snap : dataSnapshot.getChildren()) {
-                        playerScore = snap.getValue(Score.class);
-                        scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
-                    }
-                } else {
+                    scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
                     Log.e(TAG, "onDataChange: NO DATA");
                 }
             }
