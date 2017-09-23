@@ -34,7 +34,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
     private static final String TAG = "GameActivityTag";
 
-    private int missedWordsCount = 0;
+
     private FileUtils mFileUtils;
     private GameUtils mGameUtils;
     private FirebaseUtils mFirebaseUtils;
@@ -69,7 +69,41 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 mGameUtils = new GameUtils(mFileUtils.getWordsFromCategoryFile());
-                lettersTextView.setText(mGameUtils.createWordUnderscores());
+                mGameUtils.setListener(new GameUtilsInterface() {
+                    @Override
+                    public void onGuessedWord() {
+                        playerScore.increaseScore();
+                        mFirebaseUtils.updateScoreInFirebase(playerScore);
+                        scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
+                        Toast.makeText(GameActivity.this, "Congratulations!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onWrongLetterSelected() {
+                        pictureContainer.setImageResource(missedLetterImg[mGameUtils.getMissedLettersCount()]);
+                        triesLeftTextView.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
+                    }
+
+                    @Override
+                    public void onCorrectLetterSelected() {
+                        lettersTextView.setText(mGameUtils.replaceLetter());
+                    }
+
+                    @Override
+                    public void onGameOver() {
+                        Toast.makeText(GameActivity.this, "Game Over", Toast.LENGTH_SHORT).show();
+                        lettersTextView.setText(mGameUtils.getWordToGuess());
+                        LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
+                        for (int i = 0; i < buttons_layout.getChildCount(); i++) {
+                            LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
+                            for (int j = 0; j < row.getChildCount(); j++) {
+                                Button letter_button = (Button) row.getChildAt(j);
+                                letter_button.setEnabled(false);
+                            }
+                        }
+                    }
+                });
+                lettersTextView.setText(mGameUtils.convertWordToUnderscores());
                 triesLeftTextView.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
                 mFileUtils.getWordsFromCategoryFile();
                 pictureContainer = (ImageView) findViewById(R.id.picture_container);
@@ -91,35 +125,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     public void onClick(View view) {
         view.setEnabled(false);
 
-        if (mGameUtils.isLetterContainedInWord((char) view.getTag())) {
-            lettersTextView.setText(mGameUtils.replaceLetter());
-            if (!lettersTextView.getText().toString().contains(String.valueOf('_'))) {
-                mGameUtils.addGuessedWord();
-                mGameUtils.resetTries();
-                Toast.makeText(this, "Congratulations!", Toast.LENGTH_SHORT).show();
-                playerScore.increaseScore();
-                mFirebaseUtils.updateScoreInFirebase(playerScore);
-                scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
-            }
-        } else {
-            pictureContainer.setImageResource(missedLetterImg[missedWordsCount]);
-            mGameUtils.subtractOneTry();
-            triesLeftTextView.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
-            if (mGameUtils.getTriesLeft() == 0) {
-                Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
-                lettersTextView.setText(mGameUtils.getWordToGuess());
-                LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
-                for (int i = 0; i < buttons_layout.getChildCount(); i++) {
-                    LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
-                    for (int j = 0; j < row.getChildCount(); j++) {
-                        Button letter_button = (Button) row.getChildAt(j);
-                        letter_button.setEnabled(false);
-                    }
-                }
-                return;
-            }
-            missedWordsCount++;
-        }
+        char selectedLetter = (char) view.getTag();
+        mGameUtils.verifySelectedLetter(selectedLetter);
+
     }
 
     public void createButtons() {
@@ -160,7 +168,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 return super.onOptionsItemSelected(item);
         }
     }
-
 
     private void showScore() {
         final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();

@@ -86,7 +86,7 @@ public class GameUtilsTest {
 
     @Test
     public void verifyIsLetterContainedInWord() {
-        gameUtils.createWordUnderscores();
+        gameUtils.convertWordToUnderscores();
         assertEquals(false, gameUtils.isLetterContainedInWord('a'));
         assertEquals(true, gameUtils.isLetterContainedInWord('w'));
     }

@@ -1,7 +1,5 @@
 package com.hangman.app;
 
-import android.util.Log;
-
 import java.util.HashMap;
 import java.util.Random;
 
@@ -14,10 +12,15 @@ class GameUtils {
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private static final int DEFAULT_NUMBER_OF_TRIES = 6;
     private static final String TAG = "GameUtils";
+
+    private GameUtilsInterface listener;
+
     private int triesLeft = 6;
     private String[] words;
     private String wordToGuess;
     private char[] letters;
+    private int missedLettersCount = 0;
+    private StringBuffer underscores = new StringBuffer();
 
     private HashMap<String, String> guessedLetters = new HashMap<>();
     private HashMap<String, String> guessedWords = new HashMap<>();
@@ -32,16 +35,14 @@ class GameUtils {
 
     public String generateWordToGuess() {
         Random randomWord = new Random();
-        Log.e(TAG, "guessed words: " + guessedWords);
-        int index = randomWord.nextInt(words.length-1);
+        int index = randomWord.nextInt(words.length - 1);
         while (guessedWords.containsValue(words[index])) {
-            Log.e(TAG, "word contained");
-            index = randomWord.nextInt(words.length-1);
+            index = randomWord.nextInt(words.length - 1);
         }
         return words[index];
     }
 
-    private void convertWordToUnderscores() {
+    private void convertWordToCharArray() {
         wordToGuess = generateWordToGuess();
         letters = wordToGuess.toCharArray();
     }
@@ -51,12 +52,11 @@ class GameUtils {
     }
 
     public void subtractOneTry() {
-        triesLeft--;
+            triesLeft--;
     }
 
-    StringBuffer createWordUnderscores() {
-        convertWordToUnderscores();
-        StringBuffer underscores = new StringBuffer();
+    StringBuffer convertWordToUnderscores() {
+        convertWordToCharArray();
         for (char letter : letters) {
             if (letter == ' ') {
                 underscores.append(" / ");
@@ -78,6 +78,26 @@ class GameUtils {
         }
     }
 
+    public void verifySelectedLetter(char selectedLetter) {
+        if (isLetterContainedInWord(selectedLetter)) {
+            replaceLetter();
+            listener.onCorrectLetterSelected();
+            if (isWordGuessed()) {
+                addGuessedWord();
+                resetTries();
+                listener.onGuessedWord();
+            }
+        } else {
+            subtractOneTry();
+            increaseMissedLettersCount();
+            if (triesLeft == 0) {
+                listener.onGameOver();
+            } else {
+                listener.onWrongLetterSelected();
+            }
+        }
+    }
+
     public char[] getAlphabetLetters() {
         return ALPHABET_LETTERS;
     }
@@ -85,9 +105,7 @@ class GameUtils {
     public StringBuffer replaceLetter() {
         StringBuffer guessedLettersStringBuffer = new StringBuffer();
         for (char letter : letters) {
-            Log.d(TAG, "letter " + String.valueOf(letter));
             if (guessedLetters.containsKey(String.valueOf(letter))) {
-                Log.d(TAG, "guessedLetters.containsKey " + String.valueOf(letter));
                 guessedLettersStringBuffer.append(Character.toString(letter)).append(' ');
             } else if (letter == ' ') {
                 guessedLettersStringBuffer.append(" / ");
@@ -97,15 +115,15 @@ class GameUtils {
                 guessedLettersStringBuffer.append("_ ");
             }
         }
-        Log.d(TAG, "replaceLetter " + guessedLettersStringBuffer);
-        return guessedLettersStringBuffer;
+        underscores = guessedLettersStringBuffer;
+        return underscores;
     }
 
     public void addGuessedWord() {
         guessedWords.put(wordToGuess, wordToGuess);
     }
 
-    public boolean isGuessedWordsEmpty(){
+    public boolean isGuessedWordsEmpty() {
         return guessedWords.isEmpty();
     }
 
@@ -123,5 +141,28 @@ class GameUtils {
 
     public void resetTries() {
         triesLeft = DEFAULT_NUMBER_OF_TRIES;
+    }
+
+    public int getMissedLettersCount() {
+        return missedLettersCount;
+    }
+
+    public void increaseMissedLettersCount() {
+        missedLettersCount++;
+    }
+
+    public boolean isWordGuessed() {
+        if (!underscores.toString().contains(String.valueOf('_'))) {
+            return true;
+        }
+        return false;
+    }
+
+    public void setListener(GameUtilsInterface listener) {
+        this.listener = listener;
+    }
+
+    public char getInputLetter(char selectedLetter) {
+        return selectedLetter;
     }
 }
