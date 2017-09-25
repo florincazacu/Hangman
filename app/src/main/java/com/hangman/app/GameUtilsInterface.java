@@ -7,7 +7,7 @@ package com.hangman.app;
 public interface GameUtilsInterface {
 
     void onGuessedWord();
-    void onWrongLetterSelected();
+    void onWrongLetterSelected(int missedLetterCount, int triesLeft);
     void onCorrectLetterSelected();
     void onGameOver();
 }

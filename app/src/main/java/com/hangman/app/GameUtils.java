@@ -33,6 +33,11 @@ class GameUtils {
         }
     }
 
+    private void convertWordToCharArray() {
+        wordToGuess = generateWordToGuess();
+        letters = wordToGuess.toCharArray();
+    }
+
     public String generateWordToGuess() {
         Random randomWord = new Random();
         int index = randomWord.nextInt(words.length - 1);
@@ -40,11 +45,6 @@ class GameUtils {
             index = randomWord.nextInt(words.length - 1);
         }
         return words[index];
-    }
-
-    private void convertWordToCharArray() {
-        wordToGuess = generateWordToGuess();
-        letters = wordToGuess.toCharArray();
     }
 
     public int getTriesLeft() {
@@ -55,7 +55,7 @@ class GameUtils {
             triesLeft--;
     }
 
-    StringBuffer convertWordToUnderscores() {
+    public StringBuffer convertWordToUnderscores() {
         convertWordToCharArray();
         for (char letter : letters) {
             if (letter == ' ') {
@@ -69,7 +69,7 @@ class GameUtils {
         return underscores;
     }
 
-    boolean isLetterContainedInWord(char selectedLetter) {
+    public boolean isLetterContainedInWord(char selectedLetter) {
         if (ArrayUtils.contains(letters, selectedLetter)) {
             guessedLetters.put(Character.toString(selectedLetter), Character.toString(selectedLetter));
             return true;
@@ -93,7 +93,7 @@ class GameUtils {
             if (triesLeft == 0) {
                 listener.onGameOver();
             } else {
-                listener.onWrongLetterSelected();
+                listener.onWrongLetterSelected(getMissedLettersCount(),getTriesLeft());
             }
         }
     }
@@ -127,10 +127,6 @@ class GameUtils {
         return guessedWords.isEmpty();
     }
 
-    public void startGame() {
-
-    }
-
     public String getWordToGuess() {
         return wordToGuess;
     }
@@ -160,9 +156,5 @@ class GameUtils {
 
     public void setListener(GameUtilsInterface listener) {
         this.listener = listener;
-    }
-
-    public char getInputLetter(char selectedLetter) {
-        return selectedLetter;
     }
 }

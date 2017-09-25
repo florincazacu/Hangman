@@ -79,9 +79,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     }
 
                     @Override
-                    public void onWrongLetterSelected() {
-                        pictureContainer.setImageResource(missedLetterImg[mGameUtils.getMissedLettersCount()]);
-                        triesLeftTextView.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
+                    public void onWrongLetterSelected(int missedLetterCount, int triesLeft) {
+                        pictureContainer.setImageResource(missedLetterImg[missedLetterCount]);
+                        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
                     }
 
                     @Override
