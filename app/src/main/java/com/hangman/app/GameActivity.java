@@ -30,7 +30,7 @@ import com.google.firebase.storage.FileDownloadTask;
 
 import static com.hangman.app.R.id.buttons_layout;
 
-public class GameActivity extends MainActivity implements View.OnClickListener {
+public class GameActivity extends MainActivity implements View.OnClickListener, GameContract.View {
 
     private static final String TAG = "GameActivityTag";
 
@@ -68,70 +68,9 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         mFirebaseUtils.getStorageReference().getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                mGamePresenter = new GamePresenter(mFileUtils.getWordsFromCategoryFile());
-                mGamePresenter.setUserActionsInterfaceListener(new UserActionsInterface() {
-                    @Override
-                    public void onGuessedWord() {
-                        playerScore.increaseScore();
-                        mFirebaseUtils.updateScoreInFirebase(playerScore);
-                        scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
-                    }
+                mGamePresenter = new GamePresenter(GameActivity.this);
+                mGamePresenter.addWords(mFileUtils.getWordsFromCategoryFile());
 
-                    @Override
-                    public void onWrongLetterSelected(int missedLetterCount, int triesLeft) {
-                        pictureContainer.setImageResource(missedLetterImg[missedLetterCount]);
-                        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
-                    }
-
-                    @Override
-                    public void onCorrectLetterSelected(StringBuffer letterToReplace) {
-                        lettersTextView.setText(letterToReplace);
-                    }
-
-                    @Override
-                    public void onGameOver(String wordToGuess) {
-                        lettersTextView.setText(wordToGuess);
-                        LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
-                        for (int i = 0; i < buttons_layout.getChildCount(); i++) {
-                            LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
-                            for (int j = 0; j < row.getChildCount(); j++) {
-                                Button letter_button = (Button) row.getChildAt(j);
-                                letter_button.setEnabled(false);
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void onStartGame(StringBuffer wordUnderscores, int triesLeft) {
-                        lettersTextView.setText(wordUnderscores);
-                        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
-                    }
-
-                    @Override
-                    public void onTryAgain(StringBuffer wordUnderscores, int triesLeft) {
-                        clearButtons();
-                        createButtons();
-                        lettersTextView.setText(wordUnderscores);
-                        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
-                    }
-                });
-
-                mGamePresenter.setGameViewInterfaceListener(new GameViewInterface() {
-                    @Override
-                    public void displayLoadingIndicator(boolean display) {
-
-                    }
-
-                    @Override
-                    public void displayCongratulations() {
-                        Toast.makeText(GameActivity.this, "Congratulations!", Toast.LENGTH_SHORT).show();
-                    }
-
-                    @Override
-                    public void displayGameOver() {
-                        Toast.makeText(GameActivity.this, "Game Over", Toast.LENGTH_SHORT).show();
-                    }
-                });
 
                 mGamePresenter.startNewGame();
                 mFileUtils.getWordsFromCategoryFile();
@@ -228,5 +167,54 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                 Log.e(TAG, "onCancelled: " + databaseError.getMessage());
             }
         });
+    }
+
+    @Override
+    public void displayLoadingIndicator(boolean display) {
+
+    }
+
+    @Override
+    public void displayCongratulations() {
+        Toast.makeText(GameActivity.this, "Congratulations!", Toast.LENGTH_SHORT).show();
+        playerScore.increaseScore();
+        mFirebaseUtils.updateScoreInFirebase(playerScore);
+        scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
+    }
+
+    @Override
+    public void displayWrongLetterSelected(int missedLetterCount, int triesLeft) {
+        pictureContainer.setImageResource(missedLetterImg[missedLetterCount]);
+        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
+    }
+
+    @Override
+    public void displayCorrectLetterSelected(StringBuffer letterToReplace) {
+        lettersTextView.setText(letterToReplace);
+    }
+
+    @Override
+    public void displayGameOver(String wordToGuess) {
+        Toast.makeText(GameActivity.this, "Game Over", Toast.LENGTH_SHORT).show();
+        lettersTextView.setText(wordToGuess);
+        LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        for (int i = 0; i < buttons_layout.getChildCount(); i++) {
+            LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
+            for (int j = 0; j < row.getChildCount(); j++) {
+                Button letter_button = (Button) row.getChildAt(j);
+                letter_button.setEnabled(false);
+            }
+        }
+    }
+
+    @Override
+    public void displayGameStart(StringBuffer wordUnderscores, int defaultTries) {
+        lettersTextView.setText(wordUnderscores);
+        triesLeftTextView.setText(getString(R.string.tries_left, defaultTries));
+    }
+
+    @Override
+    public void displayOnTryAgain(StringBuffer wordUnderscores, int triesLeft) {
+
     }
 }

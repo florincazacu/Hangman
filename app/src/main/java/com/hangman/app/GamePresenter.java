@@ -1,5 +1,7 @@
 package com.hangman.app;
 
+import android.support.annotation.NonNull;
+
 import java.util.HashMap;
 import java.util.Random;
 
@@ -7,14 +9,13 @@ import java.util.Random;
  * Created by Florin on 19-07-2017.
  */
 
-class GamePresenter {
+class GamePresenter implements GameContract.UserActionsListener {
 
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private static final int DEFAULT_NUMBER_OF_TRIES = 6;
     private static final String TAG = "GamePresenter";
 
-    private UserActionsInterface userActionsInterfaceListener;
-    private GameViewInterface gameViewInterfaceListener;
+    private GameContract.View mView;
 
     private int triesLeft = 6;
     private String[] words;
@@ -26,12 +27,13 @@ class GamePresenter {
     private HashMap<String, String> guessedLetters = new HashMap<>();
     private HashMap<String, String> guessedWords = new HashMap<>();
 
-    GamePresenter(String[] words) {
-        if (words != null) {
-            this.words = words;
-        } else {
-            throw new NullPointerException("The array is empty!");
-        }
+    public GamePresenter(GameContract.View view) {
+        mView = view;
+    }
+
+    public void addWords(@NonNull final String[] words) {
+        this.words = words;
+
     }
 
     private void convertWordToCharArray() {
@@ -81,32 +83,31 @@ class GamePresenter {
     }
 
     public void startNewGame() {
-        userActionsInterfaceListener.onStartGame(convertWordToUnderscores(), getTriesLeft());
+        onStartGame();
     }
 
     public void tryAgain() {
         generateWordToGuess();
-        userActionsInterfaceListener.onTryAgain(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
+        onTryAgain();
     }
 
     public void verifySelectedLetter(char selectedLetter) {
         if (isLetterContainedInWord(selectedLetter)) {
             replaceLetter();
-            userActionsInterfaceListener.onCorrectLetterSelected(replaceLetter());
+            onCorrectLetterSelected();
             if (isWordGuessed()) {
                 addGuessedWord();
                 resetTries();
-                gameViewInterfaceListener.displayCongratulations();
-                userActionsInterfaceListener.onGuessedWord();
+                mView.displayCongratulations();
+                onGuessedWord();
             }
         } else {
             subtractOneTry();
             increaseMissedLettersCount();
             if (triesLeft == 0) {
-                gameViewInterfaceListener.displayGameOver();
-                userActionsInterfaceListener.onGameOver(wordToGuess);
+                onGameOver();
             } else {
-                userActionsInterfaceListener.onWrongLetterSelected(getMissedLettersCount(),getTriesLeft());
+                onWrongLetterSelected();
             }
         }
     }
@@ -167,11 +168,38 @@ class GamePresenter {
         return false;
     }
 
-    public void setUserActionsInterfaceListener(UserActionsInterface userActionsInterfaceListener) {
-        this.userActionsInterfaceListener = userActionsInterfaceListener;
+    @Override
+    public void onGuessedWord() {
+        mView.displayCongratulations();
+
     }
 
-    public void setGameViewInterfaceListener(GameViewInterface gameViewInterfaceListener) {
-        this.gameViewInterfaceListener = gameViewInterfaceListener;
+    @Override
+    public void onWrongLetterSelected() {
+        mView.displayWrongLetterSelected(getMissedLettersCount(), getTriesLeft());
+
+    }
+
+    @Override
+    public void onCorrectLetterSelected() {
+        mView.displayCorrectLetterSelected(replaceLetter());
+
+    }
+
+    @Override
+    public void onGameOver() {
+        mView.displayGameOver(getWordToGuess());
+    }
+
+    @Override
+    public void onStartGame() {
+        mView.displayGameStart(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
+
+    }
+
+    @Override
+    public void onTryAgain() {
+        mView.displayOnTryAgain(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
+
     }
 }
