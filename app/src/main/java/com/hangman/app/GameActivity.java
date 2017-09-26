@@ -36,7 +36,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
 
 
     private FileUtils mFileUtils;
-    private GameUtils mGameUtils;
+    private GamePresenter mGamePresenter;
     private FirebaseUtils mFirebaseUtils;
     private Score playerScore;
     private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
@@ -68,14 +68,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         mFirebaseUtils.getStorageReference().getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                mGameUtils = new GameUtils(mFileUtils.getWordsFromCategoryFile());
-                mGameUtils.setListener(new GameUtilsInterface() {
+                mGamePresenter = new GamePresenter(mFileUtils.getWordsFromCategoryFile());
+                mGamePresenter.setUserActionsInterfaceListener(new UserActionsInterface() {
                     @Override
                     public void onGuessedWord() {
                         playerScore.increaseScore();
                         mFirebaseUtils.updateScoreInFirebase(playerScore);
                         scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
-                        Toast.makeText(GameActivity.this, "Congratulations!", Toast.LENGTH_SHORT).show();
                     }
 
                     @Override
@@ -85,14 +84,13 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                     }
 
                     @Override
-                    public void onCorrectLetterSelected() {
-                        lettersTextView.setText(mGameUtils.replaceLetter());
+                    public void onCorrectLetterSelected(StringBuffer letterToReplace) {
+                        lettersTextView.setText(letterToReplace);
                     }
 
                     @Override
-                    public void onGameOver() {
-                        Toast.makeText(GameActivity.this, "Game Over", Toast.LENGTH_SHORT).show();
-                        lettersTextView.setText(mGameUtils.getWordToGuess());
+                    public void onGameOver(String wordToGuess) {
+                        lettersTextView.setText(wordToGuess);
                         LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
                         for (int i = 0; i < buttons_layout.getChildCount(); i++) {
                             LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
@@ -102,9 +100,40 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
                             }
                         }
                     }
+
+                    @Override
+                    public void onStartGame(StringBuffer wordUnderscores, int triesLeft) {
+                        lettersTextView.setText(wordUnderscores);
+                        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
+                    }
+
+                    @Override
+                    public void onTryAgain(StringBuffer wordUnderscores, int triesLeft) {
+                        clearButtons();
+                        createButtons();
+                        lettersTextView.setText(wordUnderscores);
+                        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
+                    }
                 });
-                lettersTextView.setText(mGameUtils.convertWordToUnderscores());
-                triesLeftTextView.setText(getString(R.string.tries_left, mGameUtils.getTriesLeft()));
+
+                mGamePresenter.setGameViewInterfaceListener(new GameViewInterface() {
+                    @Override
+                    public void displayLoadingIndicator(boolean display) {
+
+                    }
+
+                    @Override
+                    public void displayCongratulations() {
+                        Toast.makeText(GameActivity.this, "Congratulations!", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void displayGameOver() {
+                        Toast.makeText(GameActivity.this, "Game Over", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                mGamePresenter.startNewGame();
                 mFileUtils.getWordsFromCategoryFile();
                 pictureContainer = (ImageView) findViewById(R.id.picture_container);
                 pictureContainer.setImageResource(R.drawable.hangman_start);
@@ -121,12 +150,17 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
         showScore();
     }
 
+    public void clearButtons() {
+        LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        layout.removeAllViews();
+    }
+
     @Override
     public void onClick(View view) {
         view.setEnabled(false);
 
         char selectedLetter = (char) view.getTag();
-        mGameUtils.verifySelectedLetter(selectedLetter);
+        mGamePresenter.verifySelectedLetter(selectedLetter);
 
     }
 
@@ -138,11 +172,11 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, getResources().getDimensionPixelSize(R.dimen.letter_button_height));
             params.weight = 1;
             for (int j = 0; j < 9; j++) {
-                if (j + (i * 9) < mGameUtils.getAlphabetLetters().length) {
+                if (j + (i * 9) < mGamePresenter.getAlphabetLetters().length) {
                     Button btnTag = new Button(this);
                     btnTag.setLayoutParams(params);
-                    btnTag.setText(String.valueOf(mGameUtils.getAlphabetLetters()[j + (i * 9)]));
-                    btnTag.setTag(mGameUtils.getAlphabetLetters()[j + (i * 9)]);
+                    btnTag.setText(String.valueOf(mGamePresenter.getAlphabetLetters()[j + (i * 9)]));
+                    btnTag.setTag(mGamePresenter.getAlphabetLetters()[j + (i * 9)]);
                     btnTag.setOnClickListener(this);
                     row.addView(btnTag);
                 }
@@ -162,7 +196,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.try_again:
-                mGameUtils.resetGame();
+                mGamePresenter.tryAgain();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -17,77 +17,77 @@ public class GameUtilsTest {
     private HashMap<String, String> guessedWords = new HashMap<>();
 //    private String[] wordsTest = {"word1", "word2", "word3"};
     private String[] wordsTest = {"word1", "word1"};
-    private GameUtils gameUtils = new GameUtils(wordsTest);
+    private GamePresenter mGamePresenter = new GamePresenter(wordsTest);
 
     @Test
     public void verifyNoOfTriesLeftAtTheBeginningOfTheGame() throws Exception{
-        assertEquals(6, gameUtils.getTriesLeft());
+        assertEquals(6, mGamePresenter.getTriesLeft());
     }
 
     @Test
     public void verifyGetTriesLeft() {
-        gameUtils.subtractOneTry();
-        assertEquals(5, gameUtils.getTriesLeft());
-        gameUtils.resetGame();
-        assertEquals(6, gameUtils.getTriesLeft());
+        mGamePresenter.subtractOneTry();
+        assertEquals(5, mGamePresenter.getTriesLeft());
+        mGamePresenter.resetGame();
+        assertEquals(6, mGamePresenter.getTriesLeft());
     }
 
     @Test
     public void verifyGenerateWordToGuess() {
-        gameUtils.addGuessedWord();
-        assertEquals(false, gameUtils.isGuessedWordsEmpty());
-        gameUtils.generateWordToGuess();
-        gameUtils.generateWordToGuess();
+        mGamePresenter.addGuessedWord();
+        assertEquals(false, mGamePresenter.isGuessedWordsEmpty());
+        mGamePresenter.generateWordToGuess();
+        mGamePresenter.generateWordToGuess();
     }
 
     @Test
     public void verifySubtractOneTry() {
-        gameUtils.subtractOneTry();
-        assertEquals(5,gameUtils.getTriesLeft());
+        mGamePresenter.subtractOneTry();
+        assertEquals(5, mGamePresenter.getTriesLeft());
     }
 
     @Test
     public void verifyGetAlphabetLetters() {
-        assertArrayEquals(ALPHABET_LETTERS, gameUtils.getAlphabetLetters());
+        assertArrayEquals(ALPHABET_LETTERS, mGamePresenter.getAlphabetLetters());
     }
 
     @Test
     public void verifyGuessedListIsEmptyWhenTheGameStarts(){
-        assertEquals(true, gameUtils.isGuessedWordsEmpty());
+        assertEquals(true, mGamePresenter.isGuessedWordsEmpty());
     }
 
     @Test
     public void verifyAddGuessedWord() {
-        gameUtils.addGuessedWord();
-        assertEquals(false, gameUtils.isGuessedWordsEmpty());
+        mGamePresenter.addGuessedWord();
+        assertEquals(false, mGamePresenter.isGuessedWordsEmpty());
     }
 
     @Test
     public void verifyResetGame() {
-        gameUtils.subtractOneTry();
-        assertEquals(5, gameUtils.getTriesLeft());
-        gameUtils.resetGame();
-        assertEquals(6, gameUtils.getTriesLeft());
+        mGamePresenter.subtractOneTry();
+        assertEquals(5, mGamePresenter.getTriesLeft());
+        mGamePresenter.resetGame();
+        assertEquals(6, mGamePresenter.getTriesLeft());
     }
 
     @Test
     public void verifyResetTries() {
-        gameUtils.subtractOneTry();
-        assertEquals(5, gameUtils.getTriesLeft());
-        gameUtils.resetTries();
-        assertEquals(6, gameUtils.getTriesLeft());
+        mGamePresenter.subtractOneTry();
+        assertEquals(5, mGamePresenter.getTriesLeft());
+        mGamePresenter.resetTries();
+        assertEquals(6, mGamePresenter.getTriesLeft());
     }
 
     @Test
     public void verifyCreateWordUnderscores() {
-        GameUtils gameUtils = new GameUtils(new String[]{});
+        GamePresenter gamePresenter = new GamePresenter(new String[]{});
 
     }
 
     @Test
     public void verifyIsLetterContainedInWord() {
-        gameUtils.convertWordToUnderscores();
-        assertEquals(false, gameUtils.isLetterContainedInWord('a'));
-        assertEquals(true, gameUtils.isLetterContainedInWord('w'));
+        mGamePresenter.convertWordToUnderscores();
+        assertEquals(false, mGamePresenter.isLetterContainedInWord('a'));
+        assertEquals(true, mGamePresenter.isLetterContainedInWord('w'));
     }
 }

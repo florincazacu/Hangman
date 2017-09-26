@@ -7,13 +7,14 @@ import java.util.Random;
  * Created by Florin on 19-07-2017.
  */
 
-class GameUtils {
+class GamePresenter {
 
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private static final int DEFAULT_NUMBER_OF_TRIES = 6;
-    private static final String TAG = "GameUtils";
+    private static final String TAG = "GamePresenter";
 
-    private GameUtilsInterface listener;
+    private UserActionsInterface userActionsInterfaceListener;
+    private GameViewInterface gameViewInterfaceListener;
 
     private int triesLeft = 6;
     private String[] words;
@@ -25,7 +26,7 @@ class GameUtils {
     private HashMap<String, String> guessedLetters = new HashMap<>();
     private HashMap<String, String> guessedWords = new HashMap<>();
 
-    GameUtils(String[] words) {
+    GamePresenter(String[] words) {
         if (words != null) {
             this.words = words;
         } else {
@@ -40,9 +41,9 @@ class GameUtils {
 
     public String generateWordToGuess() {
         Random randomWord = new Random();
-        int index = randomWord.nextInt(words.length - 1);
+        int index = randomWord.nextInt(words.length);
         while (guessedWords.containsValue(words[index])) {
-            index = randomWord.nextInt(words.length - 1);
+            index = randomWord.nextInt(words.length);
         }
         return words[index];
     }
@@ -56,6 +57,7 @@ class GameUtils {
     }
 
     public StringBuffer convertWordToUnderscores() {
+        underscores.setLength(0);
         convertWordToCharArray();
         for (char letter : letters) {
             if (letter == ' ') {
@@ -78,22 +80,33 @@ class GameUtils {
         }
     }
 
+    public void startNewGame() {
+        userActionsInterfaceListener.onStartGame(convertWordToUnderscores(), getTriesLeft());
+    }
+
+    public void tryAgain() {
+        generateWordToGuess();
+        userActionsInterfaceListener.onTryAgain(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
+    }
+
     public void verifySelectedLetter(char selectedLetter) {
         if (isLetterContainedInWord(selectedLetter)) {
             replaceLetter();
-            listener.onCorrectLetterSelected();
+            userActionsInterfaceListener.onCorrectLetterSelected(replaceLetter());
             if (isWordGuessed()) {
                 addGuessedWord();
                 resetTries();
-                listener.onGuessedWord();
+                gameViewInterfaceListener.displayCongratulations();
+                userActionsInterfaceListener.onGuessedWord();
             }
         } else {
             subtractOneTry();
             increaseMissedLettersCount();
             if (triesLeft == 0) {
-                listener.onGameOver();
+                gameViewInterfaceListener.displayGameOver();
+                userActionsInterfaceListener.onGameOver(wordToGuess);
             } else {
-                listener.onWrongLetterSelected(getMissedLettersCount(),getTriesLeft());
+                userActionsInterfaceListener.onWrongLetterSelected(getMissedLettersCount(),getTriesLeft());
             }
         }
     }
@@ -154,7 +167,11 @@ class GameUtils {
         return false;
     }
 
-    public void setListener(GameUtilsInterface listener) {
-        this.listener = listener;
+    public void setUserActionsInterfaceListener(UserActionsInterface userActionsInterfaceListener) {
+        this.userActionsInterfaceListener = userActionsInterfaceListener;
+    }
+
+    public void setGameViewInterfaceListener(GameViewInterface gameViewInterfaceListener) {
+        this.gameViewInterfaceListener = gameViewInterfaceListener;
     }
 }
