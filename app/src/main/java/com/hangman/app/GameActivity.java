@@ -64,6 +64,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
         lettersTextView = (TextView) findViewById(R.id.lettersInputArea);
         triesLeftTextView = (TextView) findViewById(R.id.remaining_lives);
         scoresTextView = (TextView) findViewById(R.id.score_text_view);
+        pictureContainer = (ImageView) findViewById(R.id.picture_container);
 
         mFirebaseUtils.getStorageReference().getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
             @Override
@@ -74,7 +75,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
 
                 mGamePresenter.startNewGame();
                 mFileUtils.getWordsFromCategoryFile();
-                pictureContainer = (ImageView) findViewById(R.id.picture_container);
                 pictureContainer.setImageResource(R.drawable.hangman_start);
                 createButtons();
             }
@@ -99,7 +99,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
         view.setEnabled(false);
 
         char selectedLetter = (char) view.getTag();
-        mGamePresenter.verifySelectedLetter(selectedLetter);
+        mGamePresenter.selectLetter(selectedLetter);
 
     }
 
@@ -210,11 +210,16 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
     @Override
     public void displayGameStart(StringBuffer wordUnderscores, int defaultTries) {
         lettersTextView.setText(wordUnderscores);
+        pictureContainer.setImageResource(R.drawable.hangman_start);
         triesLeftTextView.setText(getString(R.string.tries_left, defaultTries));
     }
 
     @Override
-    public void displayOnTryAgain(StringBuffer wordUnderscores, int triesLeft) {
-
+    public void displayOnTryAgain(StringBuffer wordUnderscores, int defaultTries) {
+        clearButtons();
+        createButtons();
+        lettersTextView.setText(wordUnderscores);
+        pictureContainer.setImageResource(R.drawable.hangman_start);
+        triesLeftTextView.setText(getString(R.string.tries_left, defaultTries));
     }
 }

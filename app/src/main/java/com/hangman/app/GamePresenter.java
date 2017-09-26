@@ -1,7 +1,5 @@
 package com.hangman.app;
 
-import android.support.annotation.NonNull;
-
 import java.util.HashMap;
 import java.util.Random;
 
@@ -11,6 +9,7 @@ import java.util.Random;
 
 class GamePresenter implements GameContract.UserActionsListener {
 
+    private static final int DEFAULT_MISSED_LETTERS_COUNT = 0;
     private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private static final int DEFAULT_NUMBER_OF_TRIES = 6;
     private static final String TAG = "GamePresenter";
@@ -31,9 +30,12 @@ class GamePresenter implements GameContract.UserActionsListener {
         mView = view;
     }
 
-    public void addWords(@NonNull final String[] words) {
-        this.words = words;
-
+    public void addWords(final String[] words) {
+        if (words != null) {
+            this.words = words;
+        } else {
+            throw new NullPointerException("The array is empty!");
+        }
     }
 
     private void convertWordToCharArray() {
@@ -83,33 +85,16 @@ class GamePresenter implements GameContract.UserActionsListener {
     }
 
     public void startNewGame() {
-        onStartGame();
+        startGame();
     }
 
     public void tryAgain() {
         generateWordToGuess();
-        onTryAgain();
-    }
-
-    public void verifySelectedLetter(char selectedLetter) {
-        if (isLetterContainedInWord(selectedLetter)) {
-            replaceLetter();
-            onCorrectLetterSelected();
-            if (isWordGuessed()) {
-                addGuessedWord();
-                resetTries();
-                mView.displayCongratulations();
-                onGuessedWord();
-            }
-        } else {
-            subtractOneTry();
-            increaseMissedLettersCount();
-            if (triesLeft == 0) {
-                onGameOver();
-            } else {
-                onWrongLetterSelected();
-            }
-        }
+        guessedLetters.clear();
+        underscores.setLength(0);
+        resetTries();
+        resetMissedLettersCount();
+        mView.displayOnTryAgain(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
     }
 
     public char[] getAlphabetLetters() {
@@ -159,6 +144,10 @@ class GamePresenter implements GameContract.UserActionsListener {
 
     public void increaseMissedLettersCount() {
         missedLettersCount++;
+        if (missedLettersCount == 5) {
+            underscores.setLength(0);
+            mView.displayGameOver(getWordToGuess());
+        }
     }
 
     public boolean isWordGuessed() {
@@ -168,38 +157,40 @@ class GamePresenter implements GameContract.UserActionsListener {
         return false;
     }
 
-    @Override
-    public void onGuessedWord() {
-        mView.displayCongratulations();
-
+    public void resetMissedLettersCount() {
+        missedLettersCount = DEFAULT_MISSED_LETTERS_COUNT;
     }
 
     @Override
-    public void onWrongLetterSelected() {
-        mView.displayWrongLetterSelected(getMissedLettersCount(), getTriesLeft());
-
+    public void selectLetter(char selectedLetter) {
+        if (isLetterContainedInWord(selectedLetter)) {
+            replaceLetter();
+            onCorrectLetterSelected();
+            if (isWordGuessed()) {
+                addGuessedWord();
+                resetTries();
+                mView.displayCongratulations();
+            }
+        } else {
+            subtractOneTry();
+            increaseMissedLettersCount();
+            if (triesLeft == 0) {
+                resetMissedLettersCount();
+                mView.displayGameOver(getWordToGuess());
+            } else {
+                mView.displayWrongLetterSelected(getMissedLettersCount(),getTriesLeft());
+            }
+        }
     }
 
     @Override
     public void onCorrectLetterSelected() {
         mView.displayCorrectLetterSelected(replaceLetter());
-
     }
 
     @Override
-    public void onGameOver() {
-        mView.displayGameOver(getWordToGuess());
-    }
-
-    @Override
-    public void onStartGame() {
+    public void startGame() {
         mView.displayGameStart(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
-
-    }
-
-    @Override
-    public void onTryAgain() {
-        mView.displayOnTryAgain(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
 
     }
 }

@@ -8,12 +8,10 @@ public class GameContract {
 
     public interface UserActionsListener {
 
-        void onGuessedWord();
-        void onWrongLetterSelected();
+        void selectLetter(char selectedLetter);
         void onCorrectLetterSelected();
-        void onGameOver();
-        void onStartGame();
-        void onTryAgain();
+        void startGame();
+        void tryAgain();
     }
 
     public interface View{
