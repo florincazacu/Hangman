@@ -71,9 +71,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
             public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
                 mGamePresenter = new GamePresenter(GameActivity.this);
                 mGamePresenter.addWords(mFileUtils.getWordsFromCategoryFile());
-
-
-                mGamePresenter.startNewGame();
+                mGamePresenter.startGame();
                 mFileUtils.getWordsFromCategoryFile();
                 pictureContainer.setImageResource(R.drawable.hangman_start);
                 createButtons();
@@ -97,7 +95,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
     @Override
     public void onClick(View view) {
         view.setEnabled(false);
-
         char selectedLetter = (char) view.getTag();
         mGamePresenter.selectLetter(selectedLetter);
 
@@ -111,11 +108,11 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
             LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, getResources().getDimensionPixelSize(R.dimen.letter_button_height));
             params.weight = 1;
             for (int j = 0; j < 9; j++) {
-                if (j + (i * 9) < mGamePresenter.getAlphabetLetters().length) {
+                if (j + (i * 9) < AlphabetLetters.getAlphabetLetters().length) {
                     Button btnTag = new Button(this);
                     btnTag.setLayoutParams(params);
-                    btnTag.setText(String.valueOf(mGamePresenter.getAlphabetLetters()[j + (i * 9)]));
-                    btnTag.setTag(mGamePresenter.getAlphabetLetters()[j + (i * 9)]);
+                    btnTag.setText(String.valueOf(AlphabetLetters.getAlphabetLetters()[j + (i * 9)]));
+                    btnTag.setTag(AlphabetLetters.getAlphabetLetters()[j + (i * 9)]);
                     btnTag.setOnClickListener(this);
                     row.addView(btnTag);
                 }

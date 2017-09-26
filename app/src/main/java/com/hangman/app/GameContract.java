@@ -8,9 +8,8 @@ public class GameContract {
 
     public interface UserActionsListener {
 
-        void selectLetter(char selectedLetter);
-        void onCorrectLetterSelected();
         void startGame();
+        void selectLetter(char selectedLetter);
         void tryAgain();
     }
 

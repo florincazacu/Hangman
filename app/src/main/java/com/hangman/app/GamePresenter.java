@@ -10,7 +10,6 @@ import java.util.Random;
 class GamePresenter implements GameContract.UserActionsListener {
 
     private static final int DEFAULT_MISSED_LETTERS_COUNT = 0;
-    private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
     private static final int DEFAULT_NUMBER_OF_TRIES = 6;
     private static final String TAG = "GamePresenter";
 
@@ -43,7 +42,7 @@ class GamePresenter implements GameContract.UserActionsListener {
         letters = wordToGuess.toCharArray();
     }
 
-    public String generateWordToGuess() {
+    private String generateWordToGuess() {
         Random randomWord = new Random();
         int index = randomWord.nextInt(words.length);
         while (guessedWords.containsValue(words[index])) {
@@ -52,15 +51,15 @@ class GamePresenter implements GameContract.UserActionsListener {
         return words[index];
     }
 
-    public int getTriesLeft() {
+    private int getTriesLeft() {
         return triesLeft;
     }
 
-    public void subtractOneTry() {
+    private void subtractOneTry() {
             triesLeft--;
     }
 
-    public StringBuffer convertWordToUnderscores() {
+    private StringBuffer convertWordToUnderscores() {
         underscores.setLength(0);
         convertWordToCharArray();
         for (char letter : letters) {
@@ -75,7 +74,7 @@ class GamePresenter implements GameContract.UserActionsListener {
         return underscores;
     }
 
-    public boolean isLetterContainedInWord(char selectedLetter) {
+    private boolean isLetterContainedInWord(char selectedLetter) {
         if (ArrayUtils.contains(letters, selectedLetter)) {
             guessedLetters.put(Character.toString(selectedLetter), Character.toString(selectedLetter));
             return true;
@@ -84,24 +83,7 @@ class GamePresenter implements GameContract.UserActionsListener {
         }
     }
 
-    public void startNewGame() {
-        startGame();
-    }
-
-    public void tryAgain() {
-        generateWordToGuess();
-        guessedLetters.clear();
-        underscores.setLength(0);
-        resetTries();
-        resetMissedLettersCount();
-        mView.displayOnTryAgain(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
-    }
-
-    public char[] getAlphabetLetters() {
-        return ALPHABET_LETTERS;
-    }
-
-    public StringBuffer replaceLetter() {
+    private StringBuffer replaceLetter() {
         StringBuffer guessedLettersStringBuffer = new StringBuffer();
         for (char letter : letters) {
             if (guessedLetters.containsKey(String.valueOf(letter))) {
@@ -118,31 +100,23 @@ class GamePresenter implements GameContract.UserActionsListener {
         return underscores;
     }
 
-    public void addGuessedWord() {
+    private void addGuessedWord() {
         guessedWords.put(wordToGuess, wordToGuess);
     }
 
-    public boolean isGuessedWordsEmpty() {
-        return guessedWords.isEmpty();
-    }
-
-    public String getWordToGuess() {
+    private String getWordToGuess() {
         return wordToGuess;
     }
 
-    public void resetGame() {
-        resetTries();
-    }
-
-    public void resetTries() {
+    private void resetTries() {
         triesLeft = DEFAULT_NUMBER_OF_TRIES;
     }
 
-    public int getMissedLettersCount() {
+    private int getMissedLettersCount() {
         return missedLettersCount;
     }
 
-    public void increaseMissedLettersCount() {
+    private void increaseMissedLettersCount() {
         missedLettersCount++;
         if (missedLettersCount == 5) {
             underscores.setLength(0);
@@ -150,22 +124,27 @@ class GamePresenter implements GameContract.UserActionsListener {
         }
     }
 
-    public boolean isWordGuessed() {
+    private boolean isWordGuessed() {
         if (!underscores.toString().contains(String.valueOf('_'))) {
             return true;
         }
         return false;
     }
 
-    public void resetMissedLettersCount() {
+    private void resetMissedLettersCount() {
         missedLettersCount = DEFAULT_MISSED_LETTERS_COUNT;
+    }
+
+    @Override
+    public void startGame() {
+        mView.displayGameStart(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
     }
 
     @Override
     public void selectLetter(char selectedLetter) {
         if (isLetterContainedInWord(selectedLetter)) {
             replaceLetter();
-            onCorrectLetterSelected();
+            mView.displayCorrectLetterSelected(replaceLetter());
             if (isWordGuessed()) {
                 addGuessedWord();
                 resetTries();
@@ -183,14 +162,12 @@ class GamePresenter implements GameContract.UserActionsListener {
         }
     }
 
-    @Override
-    public void onCorrectLetterSelected() {
-        mView.displayCorrectLetterSelected(replaceLetter());
-    }
-
-    @Override
-    public void startGame() {
-        mView.displayGameStart(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
-
+    public void tryAgain() {
+        generateWordToGuess();
+        guessedLetters.clear();
+        underscores.setLength(0);
+        resetTries();
+        resetMissedLettersCount();
+        mView.displayOnTryAgain(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
     }
 }
