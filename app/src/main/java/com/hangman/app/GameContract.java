@@ -17,7 +17,7 @@ public class GameContract {
 
         void displayLoadingIndicator(boolean display);
         void displayCongratulations();
-        void displayWrongLetterSelected(int missedLetterCount, int triesLeft);
+        void displayWrongLetterSelected(int resId, int triesLeft);
         void displayCorrectLetterSelected(StringBuffer letterToReplace);
         void displayGameOver(String wordToGuess);
         void displayGameStart(StringBuffer wordUnderscores, int triesLeft);

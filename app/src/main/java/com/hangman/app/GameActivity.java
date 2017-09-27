@@ -39,8 +39,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
     private GamePresenter mGamePresenter;
     private FirebaseUtils mFirebaseUtils;
     private Score playerScore;
-    private int[] missedLetterImg = new int[]{R.drawable.hangman_1st_miss, R.drawable.hangman_2nd_miss,
-            R.drawable.hangman_3rd_miss, R.drawable.hangman_4th_miss, R.drawable.hangman_5th_miss, R.drawable.hangman_game_over};
 
     private TextView lettersTextView;
     private TextView triesLeftTextView;
@@ -180,8 +178,8 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
     }
 
     @Override
-    public void displayWrongLetterSelected(int missedLetterCount, int triesLeft) {
-        pictureContainer.setImageResource(missedLetterImg[missedLetterCount]);
+    public void displayWrongLetterSelected(int resId, int triesLeft) {
+        pictureContainer.setImageResource(resId);
         triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
     }
 
