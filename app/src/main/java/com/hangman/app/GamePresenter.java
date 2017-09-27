@@ -1,5 +1,7 @@
 package com.hangman.app;
 
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.Random;
 
@@ -10,12 +12,12 @@ import java.util.Random;
 class GamePresenter implements GameContract.UserActionsListener {
 
     private static final int DEFAULT_MISSED_LETTERS_COUNT = 0;
-    private static final int DEFAULT_NUMBER_OF_TRIES = 6;
+    private static final int DEFAULT_NUMBER_OF_TRIES = 5;
     private static final String TAG = "GamePresenter";
 
     private GameContract.View mView;
 
-    private int triesLeft = 6;
+    private int triesLeft = DEFAULT_NUMBER_OF_TRIES;
     private String[] words;
     private String wordToGuess;
     private char[] letters;
@@ -76,7 +78,6 @@ class GamePresenter implements GameContract.UserActionsListener {
 
     private boolean isLetterContainedInWord(char selectedLetter) {
         if (ArrayUtils.contains(letters, selectedLetter)) {
-            guessedLetters.put(Character.toString(selectedLetter), Character.toString(selectedLetter));
             return true;
         } else {
             return false;
@@ -118,10 +119,6 @@ class GamePresenter implements GameContract.UserActionsListener {
 
     private void increaseMissedLettersCount() {
         missedLettersCount++;
-        if (missedLettersCount == 5) {
-            underscores.setLength(0);
-            mView.displayGameOver(getWordToGuess());
-        }
     }
 
     private boolean isWordGuessed() {
@@ -140,9 +137,14 @@ class GamePresenter implements GameContract.UserActionsListener {
         mView.displayGameStart(convertWordToUnderscores(), DEFAULT_NUMBER_OF_TRIES);
     }
 
+    private void addGuessedLetter(char selectedLetter) {
+        guessedLetters.put(Character.toString(selectedLetter), Character.toString(selectedLetter));
+    }
+
     @Override
     public void selectLetter(char selectedLetter) {
         if (isLetterContainedInWord(selectedLetter)) {
+            addGuessedLetter(selectedLetter);
             replaceLetter();
             mView.displayCorrectLetterSelected(replaceLetter());
             if (isWordGuessed()) {
@@ -153,12 +155,13 @@ class GamePresenter implements GameContract.UserActionsListener {
         } else {
             subtractOneTry();
             increaseMissedLettersCount();
-            if (triesLeft == 0) {
-                resetMissedLettersCount();
+            if (missedLettersCount == 5 || triesLeft == 0) {
+                underscores.setLength(0);
                 mView.displayGameOver(getWordToGuess());
-            } else {
-                mView.displayWrongLetterSelected(getMissedLettersCount(),getTriesLeft());
             }
+//            else {
+                mView.displayWrongLetterSelected(getMissedLettersCount(),getTriesLeft());
+//            }
         }
     }
 
