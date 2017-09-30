@@ -95,7 +95,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
         view.setEnabled(false);
         char selectedLetter = (char) view.getTag();
         mGamePresenter.selectLetter(selectedLetter);
-
     }
 
     public void createButtons() {
@@ -164,6 +163,17 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
         });
     }
 
+    public void disableButtons() {
+        LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        for (int i = 0; i < buttons_layout.getChildCount(); i++) {
+            LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
+            for (int j = 0; j < row.getChildCount(); j++) {
+                Button letter_button = (Button) row.getChildAt(j);
+                letter_button.setEnabled(false);
+            }
+        }
+    }
+
     @Override
     public void displayLoadingIndicator(boolean display) {
 
@@ -175,6 +185,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
         playerScore.increaseScore();
         mFirebaseUtils.updateScoreInFirebase(playerScore);
         scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
+        disableButtons();
     }
 
     @Override
@@ -192,14 +203,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
     public void displayGameOver(String wordToGuess) {
         Toast.makeText(GameActivity.this, "Game Over", Toast.LENGTH_SHORT).show();
         lettersTextView.setText(wordToGuess);
-        LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
-        for (int i = 0; i < buttons_layout.getChildCount(); i++) {
-            LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
-            for (int j = 0; j < row.getChildCount(); j++) {
-                Button letter_button = (Button) row.getChildAt(j);
-                letter_button.setEnabled(false);
-            }
-        }
+        disableButtons();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.hangman.app;
 
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.Random;
 
@@ -56,11 +58,11 @@ class GamePresenter implements GameContract.UserActionsListener {
         return triesLeft;
     }
 
-    public boolean areTriesLeft() {
+    public boolean isGameOver() {
         if (triesLeft == 0) {
-            return false;
-        } else {
             return true;
+        } else {
+            return false;
         }
     }
 
@@ -143,15 +145,9 @@ class GamePresenter implements GameContract.UserActionsListener {
     @Override
     public void selectLetter(char selectedLetter) {
         checkSelectedLetter(selectedLetter);
-        if (areTriesLeft()) {
-            checkIfWordIsGuessed();
-        } else {
+        if (isGameOver()) {
             mView.displayGameOver(getWordToGuess());
-        }
-    }
-
-    private void checkIfWordIsGuessed() {
-        if (isWordGuessed()) {
+        } else if (isWordGuessed()) {
             addGuessedWord();
             mView.displayCongratulations();
         }
