@@ -141,17 +141,10 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // Get Post object and use the values to update the UI
-                if (dataSnapshot.exists()) {
                     for (DataSnapshot snap : dataSnapshot.getChildren()) {
                         playerScore = snap.getValue(Score.class);
                         scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
                     }
-                } else {
-                    playerScore = new Score(mFirebaseUtils.getUsername(), 0);
-                    mFirebaseUtils.updateScoreInFirebase(playerScore);
-                    scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
-                    Log.e(TAG, "onDataChange: NO DATA");
-                }
             }
 
             @Override

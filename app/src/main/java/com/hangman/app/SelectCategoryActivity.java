@@ -1,7 +1,6 @@
 package com.hangman.app;
 
 import android.app.Activity;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -12,8 +11,6 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -24,7 +21,7 @@ import java.util.ArrayList;
 
 public class SelectCategoryActivity extends BaseActivity {
 
-    private static final String TAG = "SelectCategoryActivityTag";
+    private static final String TAG = "SelectCategoryTag";
 
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
 
@@ -37,7 +34,7 @@ public class SelectCategoryActivity extends BaseActivity {
 
     private ArrayList<Category> categoriesList = new ArrayList<>();
 
-    private FirebaseUser mFirebaseUser;
+
 
     private String[] PERMISSIONS_STORAGE = {
             android.Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -76,13 +73,6 @@ public class SelectCategoryActivity extends BaseActivity {
             public void onCancelled(DatabaseError databaseError) {
             }
         });
-
-        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (mFirebaseUser == null) {
-            Intent myIntent = new Intent(SelectCategoryActivity.this, SignInActivity.class);
-            startActivity(myIntent);
-        }
     }
 
 

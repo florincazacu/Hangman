@@ -7,6 +7,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -24,6 +26,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     private FirebaseUtils mFirebaseUtils;
 
+    private FirebaseUser mFirebaseUser;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -35,6 +39,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         playButton.setOnClickListener(this);
 
         mFirebaseUtils = new FirebaseUtils();
+
+        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
+
+        if (mFirebaseUser == null) {
+            Intent myIntent = new Intent(MainActivity.this, SignInActivity.class);
+            startActivity(myIntent);
+        }
 
         DatabaseReference mDatabasePlayers = FirebaseDatabase.getInstance().getReference();
         Query mDatabaseHighestPlayer = mDatabasePlayers.child("scores").orderByChild("score").limitToLast(1);
@@ -58,11 +69,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 // Get Post object and use the values to update the UI
+                if (dataSnapshot.exists()) {
                     for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
                         Score playerScore = childSnapshot.getValue(Score.class);
                         String userScore = playerScore.getUsername() + ": " + String.valueOf(playerScore.getScore());
                         playerScoreTextView.setText(userScore);
                     }
+                } else {
+                    Score playerScore = new Score(mFirebaseUtils.getUsername(), 0);
+                    mFirebaseUtils.updateScoreInFirebase(playerScore);
+                    String userScore = playerScore.getUsername() + ": " + String.valueOf(playerScore.getScore());
+                    playerScoreTextView.setText(userScore);
+                }
             }
 
             @Override
