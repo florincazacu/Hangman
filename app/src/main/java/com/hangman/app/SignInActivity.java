@@ -45,7 +45,6 @@ public class SignInActivity extends BaseActivity implements GoogleApiClient.OnCo
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
                     Intent myIntent = new Intent(SignInActivity.this, MainActivity.class);
-//                    myIntent.putExtra("mUsername", user.getDisplayName());
                     startActivity(myIntent);
                     finish();
                 } else {
@@ -91,9 +90,9 @@ public class SignInActivity extends BaseActivity implements GoogleApiClient.OnCo
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         Log.d(TAG, "signInWithCredential:onComplete:" + task.isSuccessful());
 
-                        // If sign in fails, display a message to the user. If sign in succeeds
+                        // If sign in fails, display a message to the mFirebaseUser. If sign in succeeds
                         // the auth state listener will be notified and logic to handle the
-                        // signed in user can be handled in the listener.
+                        // signed in mFirebaseUser can be handled in the listener.
                         if (!task.isSuccessful()) {
                             Log.w(TAG, "signInWithCredential", task.getException());
 //                            Toast.makeText(GoogleSignInActivity.this, "Authentication failed.",

@@ -18,15 +18,15 @@ public class Score {
         this.score = score;
     }
 
-    public String getUsername() {
-        return username;
-    }
-
     public int getScore() {
         return score;
     }
 
-    public void setScore(int score) {
-        this.score = score;
+    public String getUsername() {
+        return username;
+    }
+
+    public void increaseScore() {
+        score++;
     }
 }

@@ -4,13 +4,9 @@ package com.hangman.app;
  * Created by Florin on 30-03-2017.
  */
 
-import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -24,8 +20,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -33,275 +27,87 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FileDownloadTask;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Random;
+import static com.hangman.app.R.id.buttons_layout;
 
-public class GameActivity extends MainActivity implements View.OnClickListener {
+public class GameActivity extends MainActivity implements View.OnClickListener, GameContract.View {
 
-    private static final String TAG = "GameActivity";
+    private static final String TAG = "GameActivityTag";
 
-    private final char[] ALPHABET_LETTERS = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'};
-    private String mUsername;
-    private String wordToGuess;
-    private char[] letters;
-    private int score;
-    private int tries = 6;
-    private String categories;
-    String path;
-    String categoriesPath;
+    private FileUtils mFileUtils;
+    private GamePresenter mGamePresenter;
+    private FirebaseUtils mFirebaseUtils;
+    private Score playerScore;
 
-    private TextView lettersArea;
-    private TextView triesLeft;
+    private TextView lettersTextView;
+    private TextView triesLeftTextView;
     private TextView scoresTextView;
-    private ImageView pictureContainer;
-    private Score scores;
-    private String[] words;
-
-    private DatabaseReference scoresReference;
-
-
-    private File localFile;
-
-    HashMap<String, String> guessedLetters = new HashMap<>();
-    HashMap<String, String> guessedWords = new HashMap<>();
-    HashMap<String, String> wordsFromFile = new HashMap<>();
+    private ImageView pictureContainer; //?
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_game);
-        createButtons();
-
-        lettersArea = (TextView) findViewById(R.id.lettersInputArea);
-        pictureContainer = (ImageView) findViewById(R.id.picture_container);
-        pictureContainer.setImageResource(R.drawable.hangman_start);
-        triesLeft = (TextView) findViewById(R.id.remaining_lives);
-        triesLeft.setText(getString(R.string.tries_left, tries));
-        scoresTextView = (TextView) findViewById(R.id.score_text_view);
 
         Intent i = getIntent();
-        categories = i.getStringExtra("category");
-        Log.d(TAG, "categories " + categories);
-        path = "categories/" + categories + ".txt";
-        categoriesPath = "categories/";
+        String selectedCategory = i.getStringExtra("CATEGORY");
+        String gsKey = i.getStringExtra("GS_KEY");
 
-        scoresReference = FirebaseDatabase.getInstance().getReference("scores");
-        scoresReference.keepSynced(true);
+        mFirebaseUtils = new FirebaseUtils(gsKey);
+        mFirebaseUtils.createScoresReference();
+        mFileUtils = new FileUtils(selectedCategory, this.getApplication());
 
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            mUsername = user.getDisplayName();
-        }
-        showScore(mUsername);
+        lettersTextView = (TextView) findViewById(R.id.lettersInputArea);
+        triesLeftTextView = (TextView) findViewById(R.id.remaining_lives);
+        scoresTextView = (TextView) findViewById(R.id.score_text_view);
+        pictureContainer = (ImageView) findViewById(R.id.picture_container);
 
-        if (isNetworkAvailable()) {
-            try {
-                File category = new File(this.getFilesDir(), this.categories);
-                category.mkdir();
-                Log.d(TAG, "getFilesDier: " + this.getFilesDir());
-                Log.d(TAG, "categories File: " + categories);
-                localFile = new File(categories, this.categories + ".txt");
-                Log.d(TAG, "categories: " + this.categories);
-                Log.d(TAG, "localFile: " + localFile);
-
-                FirebaseStorage firebaseStorage = FirebaseStorage.getInstance();
-                StorageReference storageReference = firebaseStorage.getReference();
-                Log.d(TAG, "storageReference: " + storageReference);
-                Log.d(TAG, "path: " + path);
-                Log.d(TAG, "categoriesPath: " + categoriesPath);
-                StorageReference textRef = storageReference.child(path);
-                Log.d(TAG, "textRef: " + textRef);
-
-                startGameActivity();
-
-                scores = new Score(mUsername, score);
-
-                textRef.getFile(localFile).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                    @Override
-                    public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                        // Local temp file has been created
-                        Log.d(TAG, "local temp file has been created");
-                        Log.d(TAG, "taskSnapshot " + taskSnapshot);
-                        try {
-                            File inStream = new File(localFile.toString());
-                            BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
-                            String line = buffReader.readLine();
-                            words = line.split(";");
-                            for (String word : words) {
-                                wordsFromFile.put(word, word);
-                            }
-                            wordToGuess = getWord().toUpperCase();
-                            letters = wordToGuess.toCharArray();
-                            lettersArea.setText(createWordUnderscores());
-                        } catch (IOException e) {
-                            Log.d(TAG, "onSuccess error: " + e.getMessage());
-                        }
-                    }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception exception) {
-                        // Handle any errors
-                        Log.e(TAG, "onCancelled: " + exception.getMessage());
-                        exception.printStackTrace();
-                    }
-                });
-            } catch (Exception e) {
-                Log.d(TAG, "isNetworkAvailable error: " + e.getMessage());
+        mFirebaseUtils.getStorageReference().getFile(mFileUtils.downloadCategory()).addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+                mGamePresenter = new GamePresenter(GameActivity.this);
+                mGamePresenter.addWords(mFileUtils.getWordsFromCategoryFile());
+                mGamePresenter.startGame();
+                mFileUtils.getWordsFromCategoryFile();
+                pictureContainer.setImageResource(R.drawable.hangman_start);
+                createButtons();
             }
-        } else {
-            try {
-                File categories = new File(this.getFilesDir(), this.categories);
-                Log.d(TAG, "else categories: " + categories);
-                localFile = new File(categories, this.categories + ".txt");
-                Log.d(TAG, "else localFile: " + localFile);
-                File inStream = new File(localFile.toString());
-                BufferedReader buffReader = new BufferedReader(new InputStreamReader(new FileInputStream(inStream)));
-                String line;
-                line = buffReader.readLine();
-                words = line.split("; ");
-                for (String word : words) {
-                    wordsFromFile.put(word, word);
-                }
-                wordToGuess = getWord();
-                letters = wordToGuess.toCharArray();
-                lettersArea.setText(createWordUnderscores());
-            } catch (IOException e) {
-                Log.d(TAG, "IOException " + e.getMessage());
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+                // Handle any errors
+                Log.e(TAG, "onFailure: " + exception.getMessage());
+                exception.printStackTrace();
             }
-        }
+        });
+        showScore();
+    }
+
+    private void clearButtons() {
+        LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        layout.removeAllViews();
     }
 
     @Override
     public void onClick(View view) {
-        if (isLetterContainedInWord(view)) {
-            guessedLetters.put(Character.toString(ALPHABET_LETTERS[(int) view.getTag()]), Character.toString(ALPHABET_LETTERS[(int) view.getTag()]));
-            replaceLetter();
-            if (!lettersArea.getText().toString().contains(String.valueOf('_'))) {
-                guessedWords.put(wordToGuess, wordToGuess);
-                tries = 6;
-                Toast.makeText(this, "Congratulations!", Toast.LENGTH_SHORT).show();
-                score++;
-                final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-                Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(DataSnapshot dataSnapshot) {
-                        if (dataSnapshot.getValue() != null) {
-                            DataSnapshot nodeDataSnapshot = dataSnapshot.getChildren().iterator().next();
-                            String key = nodeDataSnapshot.getKey();
-                            String path = "/" + dataSnapshot.getKey() + "/" + key;
-                            HashMap<String, Object> result = new HashMap<>();
-                            result.put("score", score);
-                            reference.child(path).updateChildren(result);
-                            Log.d(TAG, "score case1 " + score);
-                            scoresTextView.setText(getString(R.string.player_score, score));
-                            triesLeft.setText(getString(R.string.tries_left, tries));
-                        } else {
-                            Log.d(TAG, "score case2 " + score);
-                            scoresTextView.setText(getString(R.string.player_score, score));
-                            if (scores != null) {
-                                scores.setScore(score);
-                            } else {
-                                scores = new Score(mUsername, score);
-                            }
-                            scoresReference.push().setValue(scores);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(DatabaseError databaseError) {
-                        Log.e(TAG, ">>> Error:" + "find onCancelled:" + databaseError);
-                    }
-                });
-            }
-        } else {
-            tries--;
-            switch (tries) {
-                case 5:
-                    pictureContainer.setImageResource(R.drawable.hangman_1st_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 4:
-                    pictureContainer.setImageResource(R.drawable.hangman_2nd_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 3:
-                    pictureContainer.setImageResource(R.drawable.hangman_3rd_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 2:
-                    pictureContainer.setImageResource(R.drawable.hangman_4th_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 1:
-                    pictureContainer.setImageResource(R.drawable.hangman_5th_miss);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    break;
-                case 0:
-                    pictureContainer.setImageResource(R.drawable.hangman_game_over);
-                    triesLeft.setText(getString(R.string.tries_left, tries));
-                    Toast.makeText(this, "Game Over", Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        }
         view.setEnabled(false);
-    }
-
-    private boolean isLetterContainedInWord(View view) {
-        try {
-            for (char c : letters) {
-                if (c == ALPHABET_LETTERS[(int) view.getTag()]) {
-                    return true;
-                }
-            }
-
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    public String getWord() {
-        Random randomWord = new Random();
-        int index = randomWord.nextInt(words.length);
-        return words[index];
-    }
-
-    public void replaceLetter() {
-        StringBuffer guessedLettersStringBuffer = new StringBuffer();
-        for (char letter : letters) {
-            if (guessedLetters.containsKey(String.valueOf(letter))) {
-                guessedLettersStringBuffer.append(Character.toString(letter)).append(' ');
-            } else if (letter == ' ') {
-                guessedLettersStringBuffer.append(" / ");
-            } else if (letter == '\'') {
-                guessedLettersStringBuffer.append(" ' ");
-            } else {
-                guessedLettersStringBuffer.append("_ ");
-            }
-        }
-        lettersArea.setText(guessedLettersStringBuffer);
+        char selectedLetter = (char) view.getTag();
+        mGamePresenter.selectLetter(selectedLetter);
     }
 
     public void createButtons() {
-        LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        LinearLayout layout = (LinearLayout) findViewById(buttons_layout);
         for (int i = 0; i < 3; i++) {
             LinearLayout row = new LinearLayout(this);
-            row.setLayoutParams(new ActionBar.LayoutParams(ActionBar.LayoutParams.MATCH_PARENT, ActionBar.LayoutParams.WRAP_CONTENT));
+            row.setWeightSum(9);
+            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, getResources().getDimensionPixelSize(R.dimen.letter_button_height));
+            params.weight = 1;
             for (int j = 0; j < 9; j++) {
-                if (j + (i * 9) < ALPHABET_LETTERS.length) {
+                if (j + (i * 9) < AlphabetLetters.getAlphabetLetters().length) {
                     Button btnTag = new Button(this);
-                    btnTag.setLayoutParams(new ActionBar.LayoutParams(140, 150));
-                    btnTag.setText(String.valueOf(ALPHABET_LETTERS[j + (i * 9)]));
-                    btnTag.setTag(j + (i * 9));
+                    btnTag.setLayoutParams(params);
+                    btnTag.setText(String.valueOf(AlphabetLetters.getAlphabetLetters()[j + (i * 9)]));
+                    btnTag.setTag(AlphabetLetters.getAlphabetLetters()[j + (i * 9)]);
                     btnTag.setOnClickListener(this);
                     row.addView(btnTag);
                 }
@@ -321,100 +127,89 @@ public class GameActivity extends MainActivity implements View.OnClickListener {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.try_again:
-                pictureContainer.setImageResource(R.drawable.hangman_start);
-                tries = 6;
-                triesLeft.setText(getString(R.string.tries_left, tries));
-                clearButtons();
-                createButtons();
-                getWord();
-                for (String word : words) {
-                    wordsFromFile.put(word, word);
-                }
-                wordToGuess = getWord();
-                letters = wordToGuess.toCharArray();
-                lettersArea.setText(createWordUnderscores());
-                guessedLetters.clear();
-                lettersArea.setText(createWordUnderscores());
+                mGamePresenter.tryAgain();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
     }
 
-    public void clearButtons() {
-        LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
-        layout.removeAllViews();
+    private void showScore() {
+        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        Query query = reference.child("scores").orderByChild("username").equalTo(mFirebaseUtils.getUsername());
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                // Get Post object and use the values to update the UI
+                    for (DataSnapshot snap : dataSnapshot.getChildren()) {
+                        playerScore = snap.getValue(Score.class);
+                        scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
+                    }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "onCancelled: " + databaseError.getMessage());
+            }
+        });
     }
 
-    public StringBuffer createWordUnderscores() {
-        StringBuffer underscores = new StringBuffer();
-        for (int i = 0; i < letters.length; i++) {
-            if (letters[i] == ' ') {
-                underscores.append(" / ");
-            } else if (letters[i] == '\'') {
-                underscores.append(" ' ");
-            } else {
-                underscores.append("_ ");
+    public void disableButtons() {
+        LinearLayout buttons_layout = (LinearLayout) findViewById(R.id.buttons_layout);
+        for (int i = 0; i < buttons_layout.getChildCount(); i++) {
+            LinearLayout row = (LinearLayout) buttons_layout.getChildAt(i);
+            for (int j = 0; j < row.getChildCount(); j++) {
+                Button letter_button = (Button) row.getChildAt(j);
+                letter_button.setEnabled(false);
             }
         }
-        return underscores;
     }
 
-    private void showScore(String username) {
-        mUsername = username;
-        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Get Post object and use the values to update the UI
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot snap : dataSnapshot.getChildren()) {
-                        scores = snap.getValue(Score.class);
-                        score = scores.getScore();
-                        scoresTextView.setText(getString(R.string.player_score, score));
-                    }
-                } else {
-                    Log.e(TAG, "onDataChange: NO DATA");
-                }
-            }
+    @Override
+    public void displayLoadingIndicator(boolean display) {
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "onCancelled: " + databaseError.getMessage());
-            }
-        });
     }
 
-    private boolean isNetworkAvailable() {
-        ConnectivityManager cm =
-                (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo netInfo = cm.getActiveNetworkInfo();
-        return netInfo != null && netInfo.isConnectedOrConnecting();
+    @Override
+    public void displayCongratulations() {
+        Toast.makeText(GameActivity.this, "Congratulations!", Toast.LENGTH_SHORT).show();
+        playerScore.increaseScore();
+        mFirebaseUtils.updateScoreInFirebase(playerScore);
+        scoresTextView.setText(getString(R.string.player_score, playerScore.getScore()));
+        disableButtons();
     }
 
-    public void startGameActivity() {
-        final DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
-        Query query = reference.child("scores").orderByChild("username").equalTo(mUsername);
-        query.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                // Get Post object and use the values to update the UI
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot snap : dataSnapshot.getChildren()) {
-                        scores = snap.getValue(Score.class);
-                        score = scores.getScore();
-                        scoresTextView.setText(getString(R.string.player_score, score));
-                    }
-                } else {
-                    Log.e(TAG, "onDataChange: NO DATA");
-                }
-            }
+    @Override
+    public void displayWrongLetterSelected(int resId, int triesLeft) {
+        pictureContainer.setImageResource(resId);
+        triesLeftTextView.setText(getString(R.string.tries_left, triesLeft));
+    }
 
-            @Override
-            public void onCancelled(DatabaseError databaseError) {
-                Log.e(TAG, "onCancelled: " + databaseError.getMessage());
-            }
-        });
+    @Override
+    public void displayCorrectLetterSelected(StringBuffer letterToReplace) {
+        lettersTextView.setText(letterToReplace);
+    }
+
+    @Override
+    public void displayGameOver(String wordToGuess) {
+        Toast.makeText(GameActivity.this, "Game Over", Toast.LENGTH_SHORT).show();
+        lettersTextView.setText(wordToGuess);
+        disableButtons();
+    }
+
+    @Override
+    public void displayGameStart(StringBuffer wordUnderscores, int defaultTries) {
+        lettersTextView.setText(wordUnderscores);
+        pictureContainer.setImageResource(R.drawable.hangman_start);
+        triesLeftTextView.setText(getString(R.string.tries_left, defaultTries));
+    }
+
+    @Override
+    public void displayOnTryAgain(StringBuffer wordUnderscores, int defaultTries) {
+        clearButtons();
+        createButtons();
+        lettersTextView.setText(wordUnderscores);
+        pictureContainer.setImageResource(R.drawable.hangman_start);
+        triesLeftTextView.setText(getString(R.string.tries_left, defaultTries));
     }
 }

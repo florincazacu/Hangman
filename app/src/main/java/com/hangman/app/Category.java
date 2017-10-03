@@ -1,28 +1,32 @@
 package com.hangman.app;
 
 /**
- * Created by Florin on 17-05-2017.
+ * Created by Florin on 27-05-2017.
  */
 
 public class Category {
 
-    private String gsReference;
     private String name;
+    private String gs_reference;
 
-    public Category(){
+    public Category() {
 
     }
 
-    public Category(String gsReference, String name) {
-        this.gsReference = gsReference;
+    public Category(String gs_reference, String name) {
         this.name = name;
-    }
-
-    public String getGsReference() {
-        return gsReference;
+        this.gs_reference = gs_reference;
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getGs_reference() {
+        return gs_reference;
+    }
+
+    public void setGs_reference(String gs_reference) {
+        this.gs_reference = gs_reference;
     }
 }
