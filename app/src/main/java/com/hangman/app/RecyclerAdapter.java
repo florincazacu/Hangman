@@ -33,7 +33,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
         private Category mCategory;
 
         //3
-        private static final String CATEGORY_KEY = "CATEGORY";
         private static final String GS_KEY = "GS_KEY";
 
         //4
@@ -50,7 +49,6 @@ public class RecyclerAdapter extends RecyclerView.Adapter<RecyclerAdapter.Catego
             Log.d(TAG, "gs reference " + v.getTag().toString());
             Context context = itemView.getContext();
             Intent startGameActivity = new Intent(context, GameActivity.class);
-            startGameActivity.putExtra(CATEGORY_KEY, b.getText().toString().toLowerCase());
             startGameActivity.putExtra(GS_KEY, v.getTag().toString());
             Log.d(TAG, "b.getText " + b.getText() + " b.getTag " + v.getTag());
             context.startActivity(startGameActivity);

@@ -1,120 +1,80 @@
 package com.hangman.app;
 
-import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.support.v4.app.ActivityCompat;
-import android.support.v7.widget.GridLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
 import com.google.firebase.database.ValueEventListener;
 
-import java.util.ArrayList;
+public class MainActivity extends BaseActivity implements View.OnClickListener {
 
-public class MainActivity extends BaseActivity {
+    private static final String TAG = "MainActivityTag";
 
-    private static final String TAG = "MainActivityHangman";
+    private TextView playerScoreTextView;
+    private TextView highScoreTextView;
+    private Button playButton;
 
-    private static final int REQUEST_EXTERNAL_STORAGE = 1;
-
-    private RecyclerView mRecyclerView;
-    private RecyclerAdapter mAdapter;
-
-    private GridLayoutManager mGridLayoutManager;
-
-    private DatabaseReference categoriesReference;
-
-    private ArrayList<Category> categoriesList = new ArrayList<>();
-
-    private FirebaseUser mFirebaseUser;
-
-    private String[] PERMISSIONS_STORAGE = {
-            android.Manifest.permission.READ_EXTERNAL_STORAGE,
-            android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
+    private FirebaseUtils mFirebaseUtils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        verifyStoragePermissions(this);
 
-        mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
-        mGridLayoutManager = new GridLayoutManager(this, 2);
-        mRecyclerView.setLayoutManager(mGridLayoutManager);
+        playerScoreTextView = (TextView) findViewById(R.id.player_score_tv);
+        highScoreTextView = (TextView) findViewById(R.id.high_score_tv);
+        playButton = (Button) findViewById(R.id.play_button);
+        playButton.setOnClickListener(this);
 
-        categoriesReference = FirebaseDatabase.getInstance().getReference().child("categories");
+        mFirebaseUtils = new FirebaseUtils();
 
-        categoriesReference.addValueEventListener(new ValueEventListener() {
+        DatabaseReference mDatabasePlayers = FirebaseDatabase.getInstance().getReference();
+        Query mDatabaseHighestPlayer = mDatabasePlayers.child("scores").orderByChild("score").limitToLast(1);
+        mDatabaseHighestPlayer.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot){
+                for (DataSnapshot childSnapshot: dataSnapshot.getChildren()) {
+                    Score highScore = childSnapshot.getValue(Score.class);
+                    highScoreTextView.setText(getString(R.string.high_score, highScore.getScore()));
+                }
+            }
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                throw databaseError.toException(); // don't swallow errors
+            }
+        });
+
+        DatabaseReference reference = FirebaseDatabase.getInstance().getReference();
+        Query query = reference.child("scores").orderByChild("username").equalTo(mFirebaseUtils.getUsername());
+        query.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                //iterating through all the values in database
-                if (dataSnapshot.exists()) {
-                    for (DataSnapshot snap : dataSnapshot.getChildren()) {
-                        Category category = snap.getValue(Category.class);
-                        categoriesList.add(category);
+                // Get Post object and use the values to update the UI
+                    for (DataSnapshot childSnapshot : dataSnapshot.getChildren()) {
+                        Score playerScore = childSnapshot.getValue(Score.class);
+                        String userScore = playerScore.getUsername() + ": " + String.valueOf(playerScore.getScore());
+                        playerScoreTextView.setText(userScore);
                     }
-                } else {
-                    Log.e(TAG, "onDataChange: NO DATA");
-                }
-                mAdapter = new RecyclerAdapter(categoriesList);
-                mRecyclerView.setAdapter(mAdapter);
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
+                Log.e(TAG, "onCancelled: " + databaseError.getMessage());
             }
         });
-
-        mFirebaseUser = FirebaseAuth.getInstance().getCurrentUser();
-
-        if (mFirebaseUser == null) {
-            Intent myIntent = new Intent(MainActivity.this, SignInActivity.class);
-            startActivity(myIntent);
-        }
-    }
-
-
-    public void verifyStoragePermissions(Activity activity) {
-        // Check if we have write permission
-        int permission = ActivityCompat.checkSelfPermission(activity, android.Manifest.permission.WRITE_EXTERNAL_STORAGE);
-
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            // We don't have permission so prompt the mFirebaseUser
-            ActivityCompat.requestPermissions(
-                    activity,
-                    PERMISSIONS_STORAGE,
-                    REQUEST_EXTERNAL_STORAGE
-            );
-        }
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();
-        inflater.inflate(R.menu.main_menu, menu);
-        return true;
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.sign_out_menu:
-                signOut();
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
-        }
+    public void onClick(View v) {
+        Intent intent = new Intent(MainActivity.this, SelectCategoryActivity.class);
+        startActivity(intent);
     }
 }

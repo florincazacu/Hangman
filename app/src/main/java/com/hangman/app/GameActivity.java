@@ -34,7 +34,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
 
     private static final String TAG = "GameActivityTag";
 
-
     private FileUtils mFileUtils;
     private GamePresenter mGamePresenter;
     private FirebaseUtils mFirebaseUtils;
@@ -45,7 +44,6 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
     private TextView scoresTextView;
     private ImageView pictureContainer; //?
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -55,7 +53,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
         String selectedCategory = i.getStringExtra("CATEGORY");
         String gsKey = i.getStringExtra("GS_KEY");
 
-        mFirebaseUtils = new FirebaseUtils(selectedCategory, gsKey);
+        mFirebaseUtils = new FirebaseUtils(gsKey);
         mFirebaseUtils.createScoresReference();
         mFileUtils = new FileUtils(selectedCategory, this.getApplication());
 
@@ -85,7 +83,7 @@ public class GameActivity extends MainActivity implements View.OnClickListener, 
         showScore();
     }
 
-    public void clearButtons() {
+    private void clearButtons() {
         LinearLayout layout = (LinearLayout) findViewById(R.id.buttons_layout);
         layout.removeAllViews();
     }

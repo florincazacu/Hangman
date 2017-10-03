@@ -1,7 +1,5 @@
 package com.hangman.app;
 
-import android.util.Log;
-
 import java.util.HashMap;
 import java.util.Random;
 
@@ -58,7 +56,7 @@ class GamePresenter implements GameContract.UserActionsListener {
         return triesLeft;
     }
 
-    public boolean isGameOver() {
+    private boolean isGameOver() {
         if (triesLeft == 0) {
             return true;
         } else {

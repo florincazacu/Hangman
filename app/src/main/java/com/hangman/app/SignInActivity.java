@@ -45,7 +45,6 @@ public class SignInActivity extends BaseActivity implements GoogleApiClient.OnCo
                     // User is signed in
                     Log.d(TAG, "onAuthStateChanged:signed_in:" + user.getUid());
                     Intent myIntent = new Intent(SignInActivity.this, MainActivity.class);
-//                    myIntent.putExtra("mUsername", mFirebaseUser.getDisplayName());
                     startActivity(myIntent);
                     finish();
                 } else {

@@ -1,11 +1,11 @@
 <resources>
     <string name="app_name">Hangman</string>
-    <!--<string name="server_client_id">503407872082-gutplsv8pfbivi7k081ue6ssmg86l7pi.apps.googleusercontent.com</string>-->
     <string name="server_client_id">503407872082-06t83l6t2hmd22i3gpmt9r5lso3kp8l1.apps.googleusercontent.com</string>
     <string name="sign_out">Sign Out</string>
     <string name="try_again">Try again</string>
     <string name="tries_left">Tries: %1$d</string>
-    <string name="player_score">Score: %1$d</string>
+    <string name="player_score">Player Score: %1$d</string>
+    <string name="high_score">High Score: %1$d</string>
     <string name="anatomy">ANATOMY</string>
     <string name="animals">ANIMALS</string>
     <string name="buildings">BUILDINGS</string>
@@ -32,4 +32,10 @@
     <string name="trees_and_flowers">TREES AND FLOWERS</string>
     <string name="weather">WEATHER</string>
     <string name="category">Category</string>
+    <string name="play_button">PLAY</string>
+    <string name="letter_h">H</string>
+    <string name="letter_a">A</string>
+    <string name="letter_n">N</string>
+    <string name="letter_g">G</string>
+    <string name="letter_m">M</string>
 </resources>

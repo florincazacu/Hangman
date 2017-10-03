@@ -11,21 +11,23 @@ import com.google.firebase.storage.StorageReference;
  * Created by Florin on 01-08-2017.
  */
 
-public class FirebaseUtils {
+class FirebaseUtils {
 
     private static final String TAG = "FirebaseUtils";
 
     private DatabaseReference scoresReference;
-    private String selectedCategory;
     private String gsKey;
     private String mUsername;
 
-    public FirebaseUtils(String selectedCategory, String gsKey) {
-        this.selectedCategory = selectedCategory;
+    public FirebaseUtils() {
+
+    }
+
+    public FirebaseUtils(String gsKey) {
         this.gsKey = gsKey;
     }
 
-    public FirebaseStorage getFirebaseStorage() {
+    private FirebaseStorage getFirebaseStorage() {
         return FirebaseStorage.getInstance();
     }
 
@@ -42,15 +44,12 @@ public class FirebaseUtils {
         FirebaseDatabase.getInstance().getReference().child("scores").child(mUsername).setValue(playerScore);
     }
 
-    public FirebaseUser getFirebaseUser() {
+    private FirebaseUser getFirebaseUser() {
         return FirebaseAuth.getInstance().getCurrentUser();
     }
 
-    public String getGsKey() {
-        return gsKey;
-    }
 
     public String getUsername() {
-            return mUsername = getFirebaseUser().getDisplayName();
+        return mUsername = getFirebaseUser().getDisplayName();
     }
 }
